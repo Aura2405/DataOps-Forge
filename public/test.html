@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataOps Forge — Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
+  <style>
+    body { display:block; overflow-y:auto; }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .feature-tile {
+      background: var(--white);
+      border: 1.5px solid var(--gray-light);
+      border-radius: 12px;
+      padding: 22px 18px;
+      text-align: left;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      display: block;
+      box-shadow: 0 2px 10px rgba(124,58,237,0.05);
+    }
+
+    .feature-tile:hover {
+      border-color: var(--purple-accent);
+      background: var(--purple-glow);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(124,58,237,0.15);
+    }
+
+    .feature-tile.active {
+      border-color: var(--purple-accent);
+      background: var(--purple-glow);
+    }
+
+    .feature-tile.locked {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    .feature-tile.locked:hover {
+      transform: none;
+      box-shadow: 0 2px 10px rgba(124,58,237,0.05);
+      border-color: var(--gray-light);
+      background: var(--white);
+    }
+
+    .ft-icon { font-size: 28px; margin-bottom: 10px; display: block; }
+    .ft-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--black);
+      margin-bottom: 4px;
+    }
+    .ft-week {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--purple-accent);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .ft-desc {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--gray-mid);
+      letter-spacing: 0.3px;
+      line-height: 1.6;
+    }
+
+    .welcome-hero {
+      background: linear-gradient(135deg, var(--purple-dark), var(--purple-mid) 60%, var(--purple-accent));
+      border-radius: var(--radius-card);
+      padding: 28px 32px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+    }
+
+    .welcome-hero::before {
+      content: '⚗️';
+      position: absolute;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 72px;
+      opacity: 0.12;
+    }
+
+    .wh-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 6px;
+    }
+
+    .wh-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 6px;
+    }
+
+    .wh-title span { color: var(--purple-light); }
+
+    .wh-sub {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.7;
+    }
+
+    .wh-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .wh-pill {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 20px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: rgba(255,255,255,0.85);
+      padding: 4px 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gray-text);
+      margin: 28px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gray-light);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="page-shell">
+
+    <nav class="top-nav">
+      <div class="nav-brand">
+        <div class="nav-logo">DataOps <span>Forge</span></div>
+        <div class="nav-divider"></div>
+        <div class="nav-page-label">Dashboard</div>
+      </div>
+      <div class="nav-right">
+        <div class="nav-user-pill">
+          <div class="nav-avatar" id="navAvatar">?</div>
+          <div>
+            <div class="nav-user-name" id="navName">Loading…</div>
+            <div class="nav-role-tag" id="navRole">—</div>
+          </div>
+        </div>
+        <button class="nav-btn" id="btnLogout">↩ Sign Out</button>
+      </div>
+    </nav>
+
+    <div class="main-content">
+
+      <!-- Welcome hero -->
+      <div class="welcome-hero">
+        <div class="wh-label">// DataOps Forge — Control Panel</div>
+        <div class="wh-title">Welcome back, <span id="heroName">Engineer</span>!</div>
+        <div class="wh-sub">
+          Your authenticated session is active. Manage and forge test data from here.
+        </div>
+        <div class="wh-pills">
+          <span class="wh-pill" id="heroPill-id">ID: —</span>
+          <span class="wh-pill" id="heroPill-role">Role: —</span>
+          <span class="wh-pill" id="heroPill-email">—</span>
+        </div>
+      </div>
+
+      <div class="section-label">Available Modules</div>
+
+      <div class="dashboard-grid">
+
+        <!-- CREATE -->
+        <a href="create_test.html" class="feature-tile active" id="tile-create">
+          <span class="ft-icon">📝</span>
+          <div class="ft-week">Week 1 · Live</div>
+          <div class="ft-title">Create Test Case</div>
+          <div class="ft-desc">Define and save new test cases with dynamic fields per testing type.</div>
+        </a>
+
+        <!-- READ -->
+        <a href="read_test.html" class="feature-tile active">
+          <span class="ft-icon">🔍</span>
+          <div class="ft-week">Week 2 · Live</div>
+          <div class="ft-title">Read / Query</div>
+          <div class="ft-desc">Search, filter, and view test cases. Scoped to your role permissions.</div>
+        </a>
+
+        <!-- UPDATE -->
+        <div class="feature-tile locked">
+          <span class="ft-icon">✏️</span>
+          <div class="ft-week">Week 3 · Coming Soon</div>
+          <div class="ft-title">Update Records</div>
+          <div class="ft-desc">Edit and version test cases. Role-scoped update permissions.</div>
+        </div>
+
+        <!-- DELETE -->
+        <div class="feature-tile locked">
+          <span class="ft-icon">🗑️</span>
+          <div class="ft-week">Week 4 · Coming Soon</div>
+          <div class="ft-title">Delete Records</div>
+          <div class="ft-desc">Soft-delete or permanently remove test cases per role.</div>
+        </div>
+
+        <!-- REPORTS -->
+        <div class="feature-tile locked">
+          <span class="ft-icon">📊</span>
+          <div class="ft-week">Week 5 · Coming Soon</div>
+          <div class="ft-title">Reports & Audit</div>
+          <div class="ft-desc">Generate reports, audit logs, and governance controls.</div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const user = JSON.parse(sessionStorage.getItem('forge_user') || '{}');
+    if (!user.name) { window.location.href = 'index.html'; }
+
+    const initials = (user.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    document.getElementById('navAvatar').textContent   = initials;
+    document.getElementById('navName').textContent     = user.name || '—';
+    document.getElementById('navRole').textContent     = user.position || '—';
+    document.getElementById('heroName').textContent    = (user.name || 'Engineer').split(' ')[0];
+    document.getElementById('heroPill-id').textContent    = 'ID: ' + (user.employeeId || '—');
+    document.getElementById('heroPill-role').textContent  = 'Role: ' + (user.position || '—');
+    document.getElementById('heroPill-email').textContent = user.email || '—';
+
+    document.getElementById('btnLogout').addEventListener('click', () => {
+      sessionStorage.removeItem('forge_user');
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

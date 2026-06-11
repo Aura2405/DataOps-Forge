@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataOps Forge — Register</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
+</head>
+<body class="scrollable">
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="page-wrapper">
+    <div class="card card-wide" id="registerCard">
+
+      <div class="card-header">
+        <div class="brand-tag">// New User Registration</div>
+        <h1 class="card-title">DataOps <span>Forge</span></h1>
+        <p class="card-subtitle">CREATE YOUR ACCOUNT — STEP 1 OF 1</p>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="card-body">
+
+        <div class="form-group">
+          <label for="reg-name">Full Name</label>
+          <input type="text" id="reg-name" placeholder="Jane Smith" autocomplete="name" />
+          <span class="field-hint" id="hint-reg-name">Name cannot be empty.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-position">Position / Role</label>
+          <div class="select-wrapper">
+            <select id="reg-position">
+              <option value="">— Select your position —</option>
+              <option value="Employee">Employee</option>
+              <option value="Senior Employee">Senior Employee</option>
+              <option value="Project Lead">Project Lead</option>
+              <option value="Manager">Manager</option>
+              <option value="Senior Manager">Senior Manager</option>
+              <option value="Director">Director</option>
+            </select>
+            <span class="select-arrow">▾</span>
+          </div>
+          <span class="field-hint" id="hint-reg-position">Please select a position.</span>
+          <!-- Permission badge shown after selection -->
+          <div class="permission-badge" id="permissionBadge" style="display:none;"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-empid">Employee ID</label>
+          <input type="text" id="reg-empid" placeholder="EMP-0001" autocomplete="off" />
+          <span class="field-hint" id="hint-reg-empid">Employee ID cannot be empty.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-email">Email ID</label>
+          <input type="email" id="reg-email" placeholder="you@company.com" autocomplete="email" />
+          <span class="field-hint" id="hint-reg-email">Please enter a valid email address.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-password">Password</label>
+          <div class="password-input-wrap">
+            <input type="password" id="reg-password" placeholder="Min. 8 chars, letter, number, special" autocomplete="new-password" />
+            <button type="button" class="pwd-toggle" id="togglePwd" title="Show/Hide password" aria-label="Toggle password visibility">
+              <span class="eye-icon" id="eyePwd">👁</span>
+            </button>
+          </div>
+          <!-- Live strength meter -->
+          <div class="pwd-strength-bar" id="pwdStrengthBar">
+            <div class="pwd-strength-fill" id="pwdStrengthFill"></div>
+          </div>
+          <div class="pwd-rules" id="pwdRules">
+            <div class="pwd-rule" id="rule-len">   <span class="rule-dot"></span> At least 8 characters</div>
+            <div class="pwd-rule" id="rule-lower"> <span class="rule-dot"></span> One lowercase letter</div>
+            <div class="pwd-rule" id="rule-upper"> <span class="rule-dot"></span> One uppercase or any letter</div>
+            <div class="pwd-rule" id="rule-num">   <span class="rule-dot"></span> One numeral (0–9)</div>
+            <div class="pwd-rule" id="rule-special"><span class="rule-dot"></span> One special character (!@#$…)</div>
+          </div>
+          <span class="field-hint" id="hint-reg-password">Password does not meet requirements.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-confirm-password">Re-enter Password</label>
+          <div class="password-input-wrap">
+            <input type="password" id="reg-confirm-password" placeholder="Repeat your password" autocomplete="new-password" />
+            <button type="button" class="pwd-toggle" id="toggleConfirmPwd" title="Show/Hide password" aria-label="Toggle confirm password visibility">
+              <span class="eye-icon" id="eyeConfirm">👁</span>
+            </button>
+          </div>
+          <span class="field-hint" id="hint-reg-confirm-password">Passwords do not match.</span>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="btnBack">← Back</button>
+          <button class="btn btn-primary" id="btnRegister">Register</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="modal-overlay" id="successModal">
+    <div class="modal modal-success">
+      <div class="modal-icon">✅</div>
+      <div class="modal-title">Registration Complete!</div>
+      <p class="modal-message">
+        Your account has been created successfully.<br/>
+        You can now sign in with your credentials.
+      </p>
+      <button class="btn btn-primary btn-full" id="successGoHome">Go to Sign In</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="script.js"></script>
+</body>
+</html>

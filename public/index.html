@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataOps Forge — Sign In</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
+</head>
+<body>
+
+  <!-- Decorative orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="page-wrapper">
+    <div class="card" id="loginCard">
+
+      <!-- Header -->
+      <div class="card-header">
+        <div class="brand-tag">// Test Data Management Engine</div>
+        <h1 class="card-title">DataOps <span>Forge</span></h1>
+        <p class="card-subtitle">SECURE ACCESS PORTAL — v1.0</p>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Body -->
+      <div class="card-body">
+
+        <div class="form-group" id="grp-email">
+          <label for="email">Email ID</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="you@company.com"
+            autocomplete="email"
+          />
+          <span class="field-hint" id="hint-email">Please enter a valid email address.</span>
+        </div>
+
+        <div class="form-group" id="grp-password">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+          />
+          <span class="field-hint" id="hint-password">Password cannot be empty.</span>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="btnSignUp">Sign Up</button>
+          <button class="btn btn-primary" id="btnLogin">Login</button>
+        </div>
+
+        <p class="card-footer-note">
+          Don't have an account? <a href="register.html">Register here</a>
+        </p>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Modal -->
+  <div class="modal-overlay" id="errorModal">
+    <div class="modal">
+      <div class="modal-icon">🔒</div>
+      <div class="modal-title">Access Denied</div>
+      <p class="modal-message" id="modalMessage">
+        No account found with these credentials.<br/>
+        Please register to get started.
+      </p>
+      <div class="btn-group">
+        <button class="btn btn-secondary" id="modalClose">Dismiss</button>
+        <button class="btn btn-primary" id="modalSignUp">Sign Up</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

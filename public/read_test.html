@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataOps Forge — View Test Cases</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
+</head>
+<body class="scrollable" style="display:block;overflow-y:auto;">
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="page-shell">
+
+    <!-- ── Top Nav ── -->
+    <nav class="top-nav">
+      <div class="nav-brand">
+        <div class="nav-logo">DataOps <span>Forge</span></div>
+        <div class="nav-divider"></div>
+        <div class="nav-page-label">View Test Cases</div>
+      </div>
+      <div class="nav-right">
+        <div class="nav-user-pill">
+          <div class="nav-avatar" id="navAvatar">?</div>
+          <div>
+            <div class="nav-user-name" id="navName">Loading…</div>
+            <div class="nav-role-tag" id="navRole">—</div>
+          </div>
+        </div>
+        
+        <a href="test.html" class="nav-btn">⬡ Dashboard</a>
+        <button class="nav-btn" id="navLogout">↩ Sign Out</button>
+      </div>
+    </nav>
+
+    <!-- ── Main ── -->
+    <div class="main-content">
+
+      <!-- Page heading -->
+      <div class="page-title-strip" style="margin-bottom:20px;">
+        <h1>
+          <small>Week 2 — Read / Query</small>
+          Test Case Repository
+        </h1>
+        <a href="create_test.html" class="btn btn-primary btn-sm" style="text-decoration:none;flex:none;">＋ Create New</a>
+      </div>
+
+      <!-- RBAC scope banner -->
+      <div class="scope-banner scope-own" id="scopeBanner">
+        <span class="scope-banner-icon">👤</span>
+        <div>Loading access scope…</div>
+      </div>
+
+      <!-- ── Filter Bar ── -->
+      <div class="filter-bar">
+
+        <!-- Search -->
+        <div class="filter-group" style="min-width:220px;flex:2;">
+          <label>🔍 Search</label>
+          <input type="text" id="filterSearch" placeholder="ID, name, description, author…" />
+        </div>
+
+        <!-- Project -->
+        <div class="filter-group">
+          <label>📁 Project</label>
+          <div class="filter-select-wrap">
+            <select id="filterProject">
+              <option value="">All Projects</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Testing Type -->
+        <div class="filter-group">
+          <label>⚗️ Test Type</label>
+          <div class="filter-select-wrap">
+            <select id="filterType">
+              <option value="">All Types</option>
+              <option value="functional">Functional</option>
+              <option value="api">API Testing</option>
+              <option value="performance">Performance</option>
+              <option value="security">Security</option>
+              <option value="ui">UI / UX</option>
+              <option value="integration">Integration</option>
+              <option value="regression">Regression</option>
+              <option value="smoke">Smoke</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Priority -->
+        <div class="filter-group">
+          <label>🚦 Priority</label>
+          <div class="filter-select-wrap">
+            <select id="filterPriority">
+              <option value="">All Priorities</option>
+              <option value="Critical">Critical</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Environment -->
+        <div class="filter-group">
+          <label>🌐 Environment</label>
+          <div class="filter-select-wrap">
+            <select id="filterEnv">
+              <option value="">All Envs</option>
+              <option value="Dev">Dev</option>
+              <option value="QA">QA</option>
+              <option value="UAT">UAT</option>
+              <option value="Prod-like">Prod-like</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="filter-group">
+          <label>📌 Status</label>
+          <div class="filter-select-wrap">
+            <select id="filterStatus">
+              <option value="">All Statuses</option>
+              <option value="Draft">Draft</option>
+              <option value="Pending">Pending Review</option>
+              <option value="Approved">Approved</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Date From -->
+        <div class="filter-group" style="min-width:140px;">
+          <label>📅 Date From</label>
+          <input type="date" id="filterDateFrom" />
+        </div>
+
+        <!-- Date To -->
+        <div class="filter-group" style="min-width:140px;">
+          <label>📅 Date To</label>
+          <input type="date" id="filterDateTo" />
+        </div>
+
+        <!-- Actions -->
+        <div class="filter-actions">
+          <button class="btn btn-secondary btn-sm" id="btnClearFilters" title="Clear all filters">✕ Clear</button>
+          <button class="btn btn-primary btn-sm"   id="btnApplyFilters">Apply</button>
+        </div>
+
+      </div><!-- /filter-bar -->
+
+      <!-- ── Results bar ── -->
+      <div class="results-bar">
+        <div class="results-count" id="resultsCount">Loading…</div>
+        <div class="sort-strip">
+          <span>SORT:</span>
+          <button class="sort-btn active" data-sort="createdTimestamp" data-label="Date Added">Date Added ↓</button>
+          <button class="sort-btn" data-sort="testCaseName"     data-label="Name">Name</button>
+          <button class="sort-btn" data-sort="priority"         data-label="Priority">Priority</button>
+          <button class="sort-btn" data-sort="testingType"      data-label="Type">Type</button>
+          <button class="sort-btn" data-sort="updatedTimestamp" data-label="Last Updated">Updated</button>
+        </div>
+      </div>
+
+      <!-- ── Card List ── -->
+      <div class="tc-card-list" id="tcCardList">
+        <!-- Populated by JS -->
+      </div>
+
+    </div><!-- /main-content -->
+  </div><!-- /page-shell -->
+
+  <div class="toast" id="toast"></div>
+  <script src="script.js"></script>
+</body>
+</html>

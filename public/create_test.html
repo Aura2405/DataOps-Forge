@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataOps Forge — Create Test Case</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
+</head>
+<body class="scrollable" style="display:block; overflow-y:auto;">
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="page-shell">
+
+    <!-- ── Navigation Bar ── -->
+    <nav class="top-nav">
+      <div class="nav-brand">
+        <div class="nav-logo">DataOps <span>Forge</span></div>
+        <div class="nav-divider"></div>
+        <div class="nav-page-label">Create Test Case</div>
+      </div>
+      <div class="nav-right">
+        <div class="nav-user-pill">
+          <div class="nav-avatar" id="navAvatar">?</div>
+          <div>
+            <div class="nav-user-name" id="navName">Loading...</div>
+            <div class="nav-role-tag" id="navRole">—</div>
+          </div>
+        </div>
+        <a href="test.html" class="nav-btn">⬡ Dashboard</a>
+        <button class="nav-btn" id="navLogout">↩ Sign Out</button>
+      </div>
+    </nav>
+
+    <!-- ── Main Content ── -->
+    <div class="main-content">
+
+      <!-- Page heading -->
+      <div class="page-title-strip">
+        <h1>
+          <small>Week 1 — Test Data</small>
+          Create New Test Case
+        </h1>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="meta-chip">Auto-ID: <span id="displayTcId">Generating…</span></div>
+        </div>
+      </div>
+
+      <!-- Permission denied banner (shown if no create permission) -->
+      <div class="perm-denied-banner" id="permDeniedBanner" style="display:none;">
+        <span class="perm-denied-icon">🔒</span>
+        <div class="perm-denied-text">
+          <strong>Access Restricted</strong>
+          Your current role does not have permission to create test cases.
+          Contact your Manager or Director to upgrade your access level.
+        </div>
+      </div>
+
+      <!-- ══════════════ FORM CARD ══════════════ -->
+      <div class="form-card" id="formCard">
+
+        <!-- Card Header -->
+        <div class="form-card-header">
+          <div class="form-card-title">
+            <small>// COMMON FIELDS</small>
+            Test Case Definition
+          </div>
+          <span class="form-card-badge" id="statusBadge">STATUS: DRAFT</span>
+        </div>
+
+        <div class="form-card-body">
+
+          <!-- Metadata row (auto-generated fields) -->
+          <div class="meta-info-row" id="metaInfoRow">
+            <div class="meta-chip">ID: <span id="metaTcId">—</span></div>
+            <div class="meta-chip">Status: <span>Draft</span></div>
+            <div class="meta-chip">Version: <span>1</span></div>
+            <div class="meta-chip">Created By: <span id="metaCreatedBy">—</span></div>
+            <div class="meta-chip">Timestamp: <span id="metaTimestamp">—</span></div>
+          </div>
+
+          <!-- ── SECTION 1: Core Info ── -->
+          <div class="form-section-heading">
+            <span class="fsh-icon">📋</span>
+            Core Information
+          </div>
+
+          <div class="form-group">
+            <label for="tc-name">Test Case Name <span style="color:var(--error)">*</span></label>
+            <input type="text" id="tc-name" placeholder="e.g. Login Validation — Valid Credentials" class="forge-input" />
+            <span class="field-hint" id="hint-tc-name">Test case name cannot be empty.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="tc-desc">Description <span style="color:var(--error)">*</span></label>
+            <textarea id="tc-desc" class="forge-textarea" placeholder="Describe what this test case verifies and its purpose…" rows="3"></textarea>
+            <span class="field-hint" id="hint-tc-desc">Description cannot be empty.</span>
+          </div>
+
+          <!-- ── SECTION 2: Classification ── -->
+          <div class="form-section-heading" style="margin-top:16px;">
+            <span class="fsh-icon">🏷️</span>
+            Classification
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="tc-project">Project <span style="color:var(--error)">*</span></label>
+              <div class="select-wrapper">
+                <select id="tc-project" class="forge-select">
+                  <option value="">— Select Project —</option>
+                </select>
+                <span class="select-arrow">▾</span>
+              </div>
+              <span class="field-hint" id="hint-tc-project">Please select a project.</span>
+            </div>
+
+            <div class="form-group">
+              <label for="tc-priority">Priority <span style="color:var(--error)">*</span></label>
+              <div class="select-wrapper">
+                <select id="tc-priority" class="forge-select">
+                  <option value="">— Select Priority —</option>
+                  <option value="Critical">🔴 Critical</option>
+                  <option value="High">🟠 High</option>
+                  <option value="Medium">🟡 Medium</option>
+                  <option value="Low">🟢 Low</option>
+                </select>
+                <span class="select-arrow">▾</span>
+              </div>
+              <span class="field-hint" id="hint-tc-priority">Please select a priority.</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="tc-env">Environment <span style="color:var(--error)">*</span></label>
+            <div class="select-wrapper">
+              <select id="tc-env" class="forge-select">
+                <option value="">— Select Environment —</option>
+                <option value="Dev">🛠️ Dev</option>
+                <option value="QA">🧪 QA</option>
+                <option value="UAT">🔍 UAT</option>
+                <option value="Prod-like">🚀 Prod-like</option>
+              </select>
+              <span class="select-arrow">▾</span>
+            </div>
+            <span class="field-hint" id="hint-tc-env">Please select an environment.</span>
+          </div>
+
+          <div class="form-group">
+            <label>Tags</label>
+            <div class="tag-input-wrapper" id="tagWrapper">
+              <input
+                type="text"
+                id="tagInput"
+                class="tag-text-input"
+                placeholder="Type a tag and press Enter or comma…"
+              />
+            </div>
+            <div class="tag-hint">Press Enter or comma to add a tag. Click × to remove.</div>
+          </div>
+
+          <!-- ── SECTION 3: Testing Type Selector ── -->
+          <div class="form-section-heading" style="margin-top:16px;">
+            <span class="fsh-icon">⚗️</span>
+            Testing Type <span style="color:var(--error);font-size:12px;">*</span>
+          </div>
+
+          <div class="type-selector-grid" id="typeSelector">
+            <!-- Cards injected by JS -->
+          </div>
+          <span class="field-hint" id="hint-tc-type" style="margin-top:8px;display:none;"></span>
+
+          <!-- ── SECTION 4: Dynamic Fields (injected by JS) ── -->
+          <div id="dynamicSection"></div>
+
+        </div><!-- /form-card-body -->
+
+        <!-- ── Action Bar ── -->
+        <div class="form-action-bar">
+          <button class="btn btn-secondary" id="btnReset">↺ Reset Form</button>
+          <button class="btn btn-primary"   id="btnSubmit">＋ Create Test Case</button>
+        </div>
+
+      </div><!-- /form-card -->
+
+      <!-- Success panel (shown after submit) -->
+      <div class="form-card" id="successCard" style="display:none;">
+        <div class="success-panel">
+          <span class="sp-icon">✅</span>
+          <div class="sp-title">Test Case Created!</div>
+          <div class="sp-id" id="spTcId">TC-XXXXXXXX</div>
+          <div class="sp-sub">Saved to test.json — Status: <strong>Draft</strong></div>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+            <button class="btn btn-secondary" id="btnCreateAnother" style="min-width:160px;">＋ Create Another</button>
+            <a href="test.html" class="btn btn-primary" style="min-width:160px;text-align:center;text-decoration:none;">
+              ⬡ Go to Dashboard
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main-content -->
+  </div><!-- /page-shell -->
+
+  <div class="toast" id="toast"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
