@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataOps Forge — Delete Test Cases</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
+</head>
+<body class="scrollable" style="display:block;overflow-y:auto;">
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="page-shell">
+
+    <!-- ── Top Nav ── -->
+    <nav class="top-nav">
+      <div class="nav-brand">
+        <div class="nav-logo">DataOps <span>Forge</span></div>
+        <div class="nav-divider"></div>
+        <div class="nav-page-label">Delete Test Cases</div>
+      </div>
+      <div class="nav-right">
+        <div class="nav-user-pill">
+          <div class="nav-avatar" id="navAvatar">?</div>
+          <div>
+            <div class="nav-user-name" id="navName">Loading…</div>
+            <div class="nav-role-tag" id="navRole">—</div>
+          </div>
+        </div>
+        <a href="read_test.html" class="nav-btn">🔍 View Cases</a>
+        <a href="test.html" class="nav-btn">⬡ Dashboard</a>
+        <button class="nav-btn" id="navLogout">↩ Sign Out</button>
+      </div>
+    </nav>
+
+    <!-- ── Main Content ── -->
+    <div class="main-content">
+
+      <!-- Page heading -->
+      <div class="page-title-strip" style="margin-bottom:20px;">
+        <h1>
+          <small>Week 4 — Delete</small>
+          Delete Test Cases
+        </h1>
+        <div class="meta-chip" id="deleteTypePill"></div>
+      </div>
+
+      <!-- No-permission state — shown by JS if role can't delete -->
+      <div id="noPermState" style="display:none;">
+        <div class="form-card">
+          <div class="delete-card-head">
+            <div class="form-card-title">
+              <small>// DELETE MODULE</small>
+              Access Restricted
+            </div>
+          </div>
+          <div class="no-del-perm">
+            <span class="no-del-perm-icon">🔒</span>
+            <div class="no-del-perm-title">Delete Permission Required</div>
+            <p class="no-del-perm-sub">
+              Your current role (<strong id="noPermRole">—</strong>) does not have delete permissions.<br/>
+              Only Project Lead and above can delete test cases.<br/>
+              Contact your Manager or Director to request access.
+            </p>
+            <div style="margin-top:24px;display:flex;gap:10px;justify-content:center;">
+              <a href="test.html" class="btn btn-secondary" style="text-decoration:none;">⬡ Dashboard</a>
+              <a href="read_test.html" class="btn btn-primary" style="text-decoration:none;">🔍 View Cases</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main delete interface — shown when user has permission -->
+      <div id="deleteInterface">
+
+        <!-- Permission description banner -->
+        <div class="perm-denied-banner" id="deleteWarnBanner"
+             style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border-color:#fca5a5;margin-bottom:18px;">
+          <span class="perm-denied-icon">⚠️</span>
+          <div class="perm-denied-text" style="color:#991b1b;">
+            <strong id="deleteWarnTitle">Delete Mode Active</strong>
+            <span id="deleteWarnDesc">Deleted test cases cannot be recovered. Proceed with caution.</span>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+          <div class="filter-group" style="min-width:220px;flex:2;">
+            <label>🔍 Search</label>
+            <input type="text" id="filterSearch" placeholder="ID, name, description, author…" />
+          </div>
+          <div class="filter-group">
+            <label>📁 Project</label>
+            <div class="filter-select-wrap">
+              <select id="filterProject"><option value="">All Projects</option></select>
+            </div>
+          </div>
+          <div class="filter-group">
+            <label>⚗️ Test Type</label>
+            <div class="filter-select-wrap">
+              <select id="filterType">
+                <option value="">All Types</option>
+                <option value="functional">Functional</option>
+                <option value="api">API Testing</option>
+                <option value="performance">Performance</option>
+                <option value="security">Security</option>
+                <option value="ui">UI / UX</option>
+                <option value="integration">Integration</option>
+                <option value="regression">Regression</option>
+                <option value="smoke">Smoke</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-group">
+            <label>🚦 Priority</label>
+            <div class="filter-select-wrap">
+              <select id="filterPriority">
+                <option value="">All Priorities</option>
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-group">
+            <label>📌 Status</label>
+            <div class="filter-select-wrap">
+              <select id="filterStatus">
+                <option value="">All Statuses</option>
+                <option value="Draft">Draft</option>
+                <option value="Pending">Pending Review</option>
+                <option value="Approved">Approved</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-actions">
+            <button class="btn btn-secondary btn-sm" id="btnClearFilters">✕ Clear</button>
+            <button class="btn btn-primary btn-sm"   id="btnApplyFilters">Apply</button>
+          </div>
+        </div>
+
+        <!-- Results bar -->
+        <div class="results-bar">
+          <div class="results-count" id="resultsCount">Loading…</div>
+          <div class="sort-strip">
+            <span>SORT:</span>
+            <button class="sort-btn active" data-sort="createdTimestamp" data-label="Date Added">Date Added ↓</button>
+            <button class="sort-btn" data-sort="testCaseName"     data-label="Name">Name</button>
+            <button class="sort-btn" data-sort="priority"         data-label="Priority">Priority</button>
+            <button class="sort-btn" data-sort="updatedTimestamp" data-label="Last Updated">Updated</button>
+          </div>
+        </div>
+
+        <!-- Card list -->
+        <div class="tc-card-list" id="tcCardList"></div>
+
+      </div><!-- /deleteInterface -->
+
+    </div><!-- /main-content -->
+  </div><!-- /page-shell -->
+
+  <!-- ── Confirm Delete Modal ── -->
+  <div class="modal-overlay" id="confirmDeleteModal">
+    <div class="modal modal-danger">
+      <div class="modal-icon">🗑️</div>
+      <div class="modal-title">Confirm Deletion</div>
+      <div class="confirm-tc-id" id="confirmTcId">TC-XXXXXXXX</div>
+      <div class="confirm-tc-name" id="confirmTcName">Test case name</div>
+      <p class="modal-message" id="confirmDeleteMsg">
+        This action cannot be undone. The test case will be permanently removed.
+      </p>
+      <div class="btn-group">
+        <button class="btn btn-secondary" id="modalCancelDelete">Cancel</button>
+        <button class="btn btn-danger"    id="modalConfirmDelete">🗑️ Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="script.js"></script>
+</body>
+</html>
