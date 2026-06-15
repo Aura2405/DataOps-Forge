@@ -272,6 +272,129 @@ app.get('/api/test-cases', (req, res) => {
   return res.json({ success: true, count: testCases.length, testCases });
 });
 
+// PUT /api/test-cases/:id — update a test case (RBAC: update scope enforced)
+app.put('/api/test-cases/:id', (req, res) => {
+  const { id }         = req.params;
+  const { updates, userPosition, employeeId } = req.body;
+
+  if (!userPosition) return res.status(401).json({ success: false, message: 'Unauthorized.' });
+
+  const perms = PERMISSIONS[userPosition];
+  if (!perms) return res.status(403).json({ success: false, message: `Unknown role: ${userPosition}` });
+
+  const testCases = readJSON(TEST_DB);
+  const idx       = testCases.findIndex(tc => tc.testCaseId === id && !tc.isDeleted);
+
+  if (idx === -1) return res.status(404).json({ success: false, message: 'Test case not found.' });
+
+  const tc = testCases[idx];
+
+  // ── RBAC update scope checks ──────────────────────────────
+  const scope = perms.update;
+
+  if (scope === 'own_drafts') {
+    // Employee: can only update their own drafts
+    if (tc.createdBy !== employeeId)  return res.status(403).json({ success: false, message: 'You can only update your own test cases.' });
+    if (tc.status !== 'Draft')        return res.status(403).json({ success: false, message: 'You can only update Draft test cases. This case has already been submitted.' });
+    if (tc.isApproved)                return res.status(403).json({ success: false, message: 'This test case has been approved and cannot be edited.' });
+  } else if (scope === 'team') {
+    // Senior Employee: own + lower-tier cases
+    const lowerTiers = Object.entries(PERMISSIONS).filter(([,p]) => p.tier <= perms.tier).map(([pos]) => pos);
+    if (!lowerTiers.includes(tc.creatorPosition) && tc.createdBy !== employeeId) {
+      return res.status(403).json({ success: false, message: 'You can only update test cases created by you or your team members.' });
+    }
+    if (tc.isApproved) return res.status(403).json({ success: false, message: 'Approved test cases cannot be edited.' });
+  } else if (scope === 'project' || scope === 'department' || scope === 'multi_project') {
+    // Project Lead, Manager, Senior Manager: broad scope but not approved cases (unless Director)
+    if (tc.isApproved) return res.status(403).json({ success: false, message: 'Approved test cases cannot be edited without Director privileges.' });
+  }
+  // Director (organization) — can edit anything
+
+  // ── Apply allowed field updates ───────────────────────────
+  const UPDATABLE_FIELDS = ['testCaseName','description','projectId','testingType','testingTypeId','priority','environment','tags','dynamicData','status'];
+  const patched = { ...tc };
+  UPDATABLE_FIELDS.forEach(field => {
+    if (updates[field] !== undefined) patched[field] = updates[field];
+  });
+
+  patched.version          = (tc.version || 1) + 1;
+  patched.updatedTimestamp = new Date().toISOString();
+  patched.lastUpdatedBy    = employeeId;
+  patched.lastUpdatedByName= updates.lastUpdatedByName || employeeId;
+
+  // Reset approval if content changed
+  if (tc.isApproved) {
+    patched.isApproved = false;
+    patched.approvedBy = null;
+    patched.approvedAt = null;
+    patched.status     = 'Draft';
+  }
+
+  testCases[idx] = patched;
+  writeJSON(TEST_DB, testCases);
+
+  return res.json({ success: true, message: 'Test case updated successfully.', testCase: patched });
+});
+
+// DELETE /api/test-cases/:id — delete a test case (RBAC: delete scope enforced)
+app.delete('/api/test-cases/:id', (req, res) => {
+  const { id }          = req.params;
+  const { userPosition, employeeId } = req.body;
+
+  if (!userPosition) return res.status(401).json({ success: false, message: 'Unauthorized.' });
+
+  const perms = PERMISSIONS[userPosition];
+  if (!perms) return res.status(403).json({ success: false, message: `Unknown role: ${userPosition}` });
+  if (!perms.delete) return res.status(403).json({ success: false, message: `Role '${userPosition}' does not have delete permission.` });
+
+  const testCases = readJSON(TEST_DB);
+  const idx       = testCases.findIndex(tc => tc.testCaseId === id && !tc.isDeleted);
+
+  if (idx === -1) return res.status(404).json({ success: false, message: 'Test case not found or already deleted.' });
+
+  const tc = testCases[idx];
+
+  // ── RBAC delete scope check ───────────────────────────────
+  const deleteScope = perms.delete;
+
+  if (deleteScope === 'soft_project') {
+    // Project Lead: can only delete cases they created or lower-tier within project
+    const lowerTiers = Object.entries(PERMISSIONS).filter(([,p]) => p.tier <= perms.tier).map(([pos]) => pos);
+    if (!lowerTiers.includes(tc.creatorPosition) && tc.createdBy !== employeeId) {
+      return res.status(403).json({ success: false, message: 'You can only delete test cases created by you or your team members.' });
+    }
+  }
+  // Manager / Senior Manager / Director — full or broad scope, allow
+
+  // ── Perform delete ─────────────────────────────────────────
+  if (deleteScope === 'permanent') {
+    // Director: hard delete — remove from array entirely
+    testCases.splice(idx, 1);
+  } else {
+    // All others: soft delete — mark isDeleted
+    testCases[idx] = {
+      ...tc,
+      isDeleted:       true,
+      deletedAt:       new Date().toISOString(),
+      deletedBy:       employeeId,
+      deletedByName:   req.body.deletedByName || employeeId,
+    };
+  }
+
+  writeJSON(TEST_DB, testCases);
+
+  // Remove from user's testCases array
+  const users   = readJSON(USER_DB);
+  const userIdx = users.findIndex(u => u.employeeId === tc.createdBy);
+  if (userIdx !== -1) {
+    users[userIdx].testCases = (users[userIdx].testCases || []).filter(tid => tid !== id);
+    writeJSON(USER_DB, users);
+  }
+
+  const deleteType = deleteScope === 'permanent' ? 'permanently deleted' : 'soft deleted';
+  return res.json({ success: true, message: `Test case ${deleteType} successfully.`, deleteType });
+});
+
 // ═══════════════════════════════════════════════════════════
 // DEFAULT ROUTE
 // ═══════════════════════════════════════════════════════════
@@ -290,5 +413,6 @@ app.listen(PORT, () => {
   console.log(`\n╔══════════════════════════════════════════════╗`);
   console.log(`║   DataOps Forge — Server Running             ║`);
   console.log(`║   http://localhost:${PORT}                      ║`);
+  console.log(`║   Week 4: Update + Delete APIs active      ║`);
   console.log(`╚══════════════════════════════════════════════╝\n`);
 });
