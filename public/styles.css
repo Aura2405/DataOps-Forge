@@ -1743,7 +1743,7 @@ textarea.forge-textarea.input-success { border-color: var(--success) !important;
   margin-bottom: 20px;
 }
 
-/*.tc-detail-field { }*/
+.tc-detail-field { }
 
 .tc-detail-label {
   font-family: var(--font-mono);
@@ -1950,4 +1950,272 @@ textarea.forge-textarea.input-success { border-color: var(--success) !important;
   .tc-detail-grid { grid-template-columns: 1fr; }
   .tc-card-head { flex-wrap: wrap; }
   .pwd-rules { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WEEK 4 ADDITIONS — Update Form, Delete Page, Confirm Modal
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Version history chip strip ───────────────────────────────── */
+.version-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(90deg, var(--purple-glow), transparent);
+  border-left: 3px solid var(--purple-accent);
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.version-strip .vs-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--purple-accent);
+}
+
+.version-strip .vs-val {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--black);
+  background: var(--white);
+  border: 1px solid var(--purple-light);
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+.version-strip .vs-sep {
+  color: var(--gray-light);
+  font-size: 14px;
+}
+
+.version-strip .vs-date {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--gray-mid);
+  margin-left: auto;
+}
+
+/* ── Unsaved-changes indicator ────────────────────────────────── */
+.unsaved-badge {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  animation: hintPop 0.2s ease;
+}
+
+.unsaved-badge.visible { display: flex; }
+.unsaved-dot {
+  width: 6px; height: 6px;
+  background: #f59e0b;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.7); }
+}
+
+/* ── Inline field-changed highlight ──────────────────────────── */
+input.field-changed,
+textarea.field-changed,
+select.field-changed {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245,158,11,0.15) !important;
+  background: #fffdf0 !important;
+}
+
+/* ── Locked approved banner (update blocked) ──────────────────── */
+.approved-lock-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 1.5px solid #86efac;
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+}
+
+.approved-lock-banner .alb-icon { font-size: 22px; }
+.approved-lock-banner .alb-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #166534;
+  line-height: 1.6;
+}
+.approved-lock-banner .alb-text strong {
+  display: block;
+  font-size: 12px;
+  color: #14532d;
+  margin-bottom: 2px;
+}
+
+/* ── Delete page specific ─────────────────────────────────────── */
+.delete-card-head {
+  background: linear-gradient(135deg, #450a0a, #7f1d1d 60%, #dc2626);
+  padding: 20px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.delete-card-head::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+}
+
+.delete-card-head .form-card-title { color: white; }
+.delete-card-head .form-card-title small { color: rgba(255,255,255,0.55); }
+
+.delete-scope-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.9);
+  padding: 5px 10px;
+  border-radius: 20px;
+}
+
+/* Delete card list – same as tc-card but with delete action */
+.tc-card-del-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--gray-light);
+  background: #fafafa;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #b91c1c, #dc2626);
+  color: white;
+  box-shadow: 0 4px 14px rgba(220,38,38,0.3);
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(220,38,38,0.4);
+}
+
+.btn-danger:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 8px rgba(220,38,38,0.2);
+}
+
+/* Soft-delete vs permanent indicators */
+.del-type-soft {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.del-type-hard {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ── Confirm delete modal ─────────────────────────────────────── */
+.modal.modal-danger { border-top-color: var(--error); }
+
+.modal-danger .modal-title { color: #991b1b; }
+
+.confirm-tc-name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--black);
+  background: var(--off-white);
+  border: 1px solid var(--gray-light);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin: 12px 0;
+  text-align: left;
+  word-break: break-word;
+}
+
+.confirm-tc-id {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--gray-mid);
+  margin-bottom: 4px;
+}
+
+/* ── No-permission locked state for delete ────────────────────── */
+.no-del-perm {
+  text-align: center;
+  padding: 52px 24px;
+}
+
+.no-del-perm-icon { font-size: 48px; display: block; margin-bottom: 14px; }
+.no-del-perm-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--black);
+  margin-bottom: 8px;
+}
+.no-del-perm-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gray-mid);
+  line-height: 1.7;
+  letter-spacing: 0.3px;
+}
+
+/* ── Deleted success state ────────────────────────────────────── */
+.del-success-flash {
+  animation: delFlash 0.4s ease;
+}
+
+@keyframes delFlash {
+  0%   { background: #fee2e2; }
+  100% { background: transparent; }
+}
+
+@media (max-width: 640px) {
+  .version-strip { flex-direction: column; align-items: flex-start; }
+  .version-strip .vs-date { margin-left: 0; }
+  .tc-card-del-row { flex-wrap: wrap; }
 }
