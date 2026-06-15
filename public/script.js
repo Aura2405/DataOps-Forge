@@ -1073,6 +1073,912 @@ function initReadTestPage() {
 }
 
 // ═══════════════════════════════════════════════════════════
+// SHARED — filter/sort/card infrastructure reused across
+//          read, update, delete pages
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Builds the standard escHtml helper — used by all card renderers.
+ */
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/**
+ * Shared filter/sort engine.
+ * allCases      — full dataset
+ * projectsMap   — { id → name }
+ * Returns sorted, filtered subset.
+ */
+function applyFilters(allCases, projectsMap) {
+  const search   = document.getElementById('filterSearch')?.value.trim().toLowerCase()  || '';
+  const project  = document.getElementById('filterProject')?.value  || '';
+  const type     = document.getElementById('filterType')?.value     || '';
+  const priority = document.getElementById('filterPriority')?.value || '';
+  const env      = document.getElementById('filterEnv')?.value      || '';
+  const status   = document.getElementById('filterStatus')?.value   || '';
+
+  return allCases.filter(tc => {
+    if (search) {
+      const hay = [tc.testCaseId, tc.testCaseName, tc.description, tc.createdByName, tc.createdBy].join(' ').toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    if (project  && tc.projectId     !== project)  return false;
+    if (type     && tc.testingTypeId !== type && tc.testingType !== type) return false;
+    if (priority && tc.priority      !== priority) return false;
+    if (env      && tc.environment   !== env)      return false;
+    if (status) {
+      if (status === 'Approved' && !tc.isApproved)              return false;
+      if (status === 'Draft'    && tc.status !== 'Draft')        return false;
+      if (status === 'Pending'  && tc.status !== 'Pending Review') return false;
+    }
+    return true;
+  });
+}
+
+/** Wire sort buttons on a page. onSort(field, dir) called after each change. */
+function wireSortButtons(onSort) {
+  let sortField = 'createdTimestamp', sortDir = 'desc';
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const field = btn.dataset.sort;
+      if (sortField === field) sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+      else { sortField = field; sortDir = 'desc'; }
+      document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      btn.textContent = btn.dataset.label + (sortDir === 'asc' ? ' ↑' : ' ↓');
+      onSort(sortField, sortDir);
+    });
+  });
+  return () => ({ sortField, sortDir });
+}
+
+/** Sort a test-case array in place. */
+function sortCases(cases, sortField, sortDir) {
+  return [...cases].sort((a, b) => {
+    let va = a[sortField] || '', vb = b[sortField] || '';
+    if (sortField === 'createdTimestamp' || sortField === 'updatedTimestamp') {
+      va = new Date(va); vb = new Date(vb);
+    } else { va = va.toString().toLowerCase(); vb = vb.toString().toLowerCase(); }
+    const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
+}
+
+/** Wire filter inputs to a callback. */
+function wireFilterInputs(onChange) {
+  ['filterSearch','filterProject','filterType','filterPriority','filterEnv','filterStatus']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.addEventListener('input', onChange); el.addEventListener('change', onChange); }
+    });
+  document.getElementById('btnApplyFilters')?.addEventListener('click', onChange);
+  document.getElementById('btnClearFilters')?.addEventListener('click', () => {
+    ['filterSearch','filterProject','filterType','filterPriority','filterEnv','filterStatus']
+      .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    onChange();
+  });
+}
+
+/** Load projects into a <select> and return a projectsMap promise. */
+async function loadProjectsIntoSelect(selectId) {
+  const map = {};
+  try {
+    const d = await fetch(`${API_BASE}/projects`).then(r => r.json());
+    if (d.success) {
+      const sel = document.getElementById(selectId);
+      d.projects.forEach(p => {
+        map[p.id] = p.name;
+        if (sel) { const o = document.createElement('option'); o.value = p.id; o.textContent = p.name; sel.appendChild(o); }
+      });
+    }
+  } catch {}
+  return map;
+}
+
+/** Shared skeleton loader */
+function showSkeletons(listId, count = 3) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  list.innerHTML = Array(count).fill(`
+    <div class="skeleton-card">
+      <div class="skeleton-box" style="width:38px;height:38px;border-radius:9px;flex-shrink:0;"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+        <div class="skeleton-box" style="height:14px;width:55%;"></div>
+        <div class="skeleton-box" style="height:10px;width:75%;"></div>
+      </div>
+    </div>`).join('');
+}
+
+/** Build the scope banner */
+function renderScopeBanner(bannerId, user, scopeKey) {
+  const scopeConfig = {
+    own_drafts:   { cls:'scope-own',     icon:'👤', label:'Own Drafts Only'     },
+    own:          { cls:'scope-own',     icon:'👤', label:'Own Test Cases'       },
+    team:         { cls:'scope-team',    icon:'👥', label:'Team Test Cases'      },
+    project:      { cls:'scope-project', icon:'📁', label:'Project Scope'        },
+    department:   { cls:'scope-dept',    icon:'🏢', label:'Department Scope'     },
+    multi_project:{ cls:'scope-dept',    icon:'📂', label:'Multiple Projects'    },
+    organization: { cls:'scope-org',     icon:'🌐', label:'Organization-wide'    },
+  };
+  const sc = scopeConfig[scopeKey] || scopeConfig.own;
+  const banner = document.getElementById(bannerId);
+  if (banner) {
+    banner.className = `scope-banner ${sc.cls}`;
+    banner.innerHTML = `<span class="scope-banner-icon">${sc.icon}</span>
+      <div><strong>${sc.label}</strong> — You can edit test cases within this scope as <strong>${user.position}</strong>.</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// UPDATE TEST CASES PAGE  (update_test.html)
+// ═══════════════════════════════════════════════════════════
+
+function initUpdateTestPage() {
+  if (!document.getElementById('tcCardList') || !window.location.pathname.includes('update_test')) return;
+
+  const user = JSON.parse(sessionStorage.getItem('forge_user') || '{}');
+  if (!user.name) { window.location.href = 'index.html'; return; }
+  wireNavBar(user);
+
+  const perms     = PERMISSIONS[user.position] || PERMISSIONS['Employee'];
+  const scope     = perms.update;
+  renderScopeBanner('scopeBanner', user, scope);
+
+  let allTestCases  = [];
+  let projectsMap   = {};
+  let sortField     = 'createdTimestamp';
+  let sortDir       = 'desc';
+  let activeEditId  = null;   // which card is currently open in edit mode
+  let hasUnsaved    = false;  // dirty flag
+  let pendingOpenId = null;   // card waiting to open after discard confirm
+
+  // Load projects
+  loadProjectsIntoSelect('filterProject').then(m => { projectsMap = m; });
+
+  // ── Fetch test cases ──────────────────────────────────────
+  async function loadTestCases() {
+    showSkeletons('tcCardList');
+    try {
+      const params = new URLSearchParams({ userPosition: user.position, employeeId: user.employeeId });
+      const res    = await fetch(`${API_BASE}/test-cases?${params}`);
+      const data   = await res.json();
+      if (data.success) { allTestCases = data.testCases; render(); }
+      else showListError(data.message);
+    } catch { showListError('Could not connect to server. Make sure it is running on port 3000.'); }
+  }
+
+  function showListError(msg) {
+    document.getElementById('tcCardList').innerHTML = `
+      <div class="empty-state"><span class="empty-state-icon">⚠️</span>
+        <div class="empty-state-title">Error Loading Test Cases</div>
+        <div class="empty-state-sub">${msg}</div></div>`;
+  }
+
+  // ── Render all cards ──────────────────────────────────────
+  function render() {
+    const filtered = sortCases(applyFilters(allTestCases, projectsMap), sortField, sortDir);
+    const list     = document.getElementById('tcCardList');
+    const countEl  = document.getElementById('resultsCount');
+    if (countEl) countEl.innerHTML = `Showing <strong>${filtered.length}</strong> of <strong>${allTestCases.length}</strong> test cases`;
+
+    if (!filtered.length) {
+      list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">🔍</span>
+        <div class="empty-state-title">No Test Cases Found</div>
+        <div class="empty-state-sub">${allTestCases.length === 0
+          ? 'No test cases yet. <a href="create_test.html" style="color:var(--purple-accent)">Create one first.</a>'
+          : 'No results match your filters.'}</div></div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(tc => buildUpdateCard(tc)).join('');
+
+    // Wire all expand/edit buttons
+    list.querySelectorAll('.tc-card-head').forEach(head => {
+      head.addEventListener('click', e => {
+        if (e.target.closest('button:not(.tc-expand-btn)')) return;
+        toggleEditCard(head.closest('.tc-card').dataset.id);
+      });
+    });
+    list.querySelectorAll('.btn-open-edit').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); toggleEditCard(btn.dataset.id); });
+    });
+    list.querySelectorAll('.btn-save-update').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); saveUpdate(btn.dataset.id); });
+    });
+    list.querySelectorAll('.btn-cancel-edit').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); cancelEdit(btn.dataset.id); });
+    });
+  }
+
+  // ── Determine if user can edit a specific test case ───────
+  function canEditThisTc(tc) {
+    if (scope === 'own_drafts') return tc.createdBy === user.employeeId && tc.status === 'Draft' && !tc.isApproved;
+    if (scope === 'team') {
+      const lowerTiers = Object.entries(PERMISSIONS).filter(([,p]) => p.tier <= perms.tier).map(([pos]) => pos);
+      return (lowerTiers.includes(tc.creatorPosition) || tc.createdBy === user.employeeId) && !tc.isApproved;
+    }
+    if (scope === 'organization') return true; // Director
+    return !tc.isApproved; // project/department/multi
+  }
+
+  function editBlockedReason(tc) {
+    if (tc.isApproved) return 'This test case has been approved and is locked from editing.';
+    if (scope === 'own_drafts') {
+      if (tc.createdBy !== user.employeeId) return 'You can only edit your own test cases.';
+      if (tc.status !== 'Draft') return 'You can only edit Draft test cases.';
+    }
+    return null;
+  }
+
+  // ── Build a single update card ────────────────────────────
+  function buildUpdateCard(tc) {
+    const icon        = typeIcon(tc.testingTypeId || tc.testingType);
+    const priCls      = `tc-pill-${(tc.priority||'low').toLowerCase()}`;
+    const statusCls   = tc.isApproved ? 'tc-pill-approved' : (tc.status==='Draft' ? 'tc-pill-draft' : 'tc-pill-pending');
+    const statusLabel = tc.isApproved ? '✓ Approved' : (tc.status || 'Draft');
+    const projName    = projectsMap[tc.projectId] || tc.projectId || '—';
+    const canEdit     = canEditThisTc(tc);
+    const blocked     = editBlockedReason(tc);
+    const isOpen      = activeEditId === tc.testCaseId;
+
+    // Build project options
+    const projOpts = Object.entries(projectsMap)
+      .map(([id, name]) => `<option value="${id}" ${tc.projectId===id?'selected':''}>${name}</option>`).join('');
+
+    // Build dynamic fields pre-filled
+    const dynConfig = DYNAMIC_FIELD_CONFIGS[tc.testingTypeId];
+    let dynHtml = '';
+    if (dynConfig) {
+      dynHtml = `<div class="dynamic-section" style="margin-top:0;">
+        <div class="dynamic-section-title">⚗️ ${dynConfig.label}</div>`;
+      dynConfig.fields.forEach(f => {
+        const req = f.required ? `<span style="color:var(--error)"> *</span>` : '';
+        const val = tc.dynamicData?.[f.id] || '';
+        if (f.type === 'textarea') {
+          dynHtml += `<div class="form-group"><label>${f.label}${req}</label>
+            <textarea id="upd-dyn-${tc.testCaseId}-${f.id}" class="forge-textarea" rows="3"
+              data-original="${escHtml(String(val))}">${escHtml(String(val))}</textarea></div>`;
+        } else if (f.type === 'select') {
+          const opts = f.options.map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('');
+          dynHtml += `<div class="form-group"><label>${f.label}${req}</label>
+            <div class="select-wrapper">
+              <select id="upd-dyn-${tc.testCaseId}-${f.id}" class="forge-select" data-original="${escHtml(val)}">
+                <option value="">— Select —</option>${opts}</select>
+              <span class="select-arrow">▾</span></div></div>`;
+        } else if (f.type === 'steps') {
+          const steps = Array.isArray(val) ? val : [];
+          const stepsHtml = steps.length
+            ? steps.map((s,i) => `<div class="step-row">
+                <span class="step-number">${i+1}.</span>
+                <input type="text" class="step-input" value="${escHtml(s)}" placeholder="Step ${i+1}…" />
+                <button class="step-remove" title="Remove">×</button></div>`).join('')
+            : `<div class="step-row"><span class="step-number">1.</span>
+               <input type="text" class="step-input" placeholder="${f.placeholder}" />
+               <button class="step-remove" title="Remove">×</button></div>`;
+          dynHtml += `<div class="form-group"><label>${f.label}${req}</label>
+            <div class="steps-list" id="upd-steps-${tc.testCaseId}-${f.id}">${stepsHtml}</div>
+            <button class="add-step-btn" data-steps-id="upd-steps-${tc.testCaseId}-${f.id}">＋ Add Step</button></div>`;
+        } else {
+          dynHtml += `<div class="form-group"><label>${f.label}${req}</label>
+            <input type="text" id="upd-dyn-${tc.testCaseId}-${f.id}" class="forge-input"
+              value="${escHtml(String(val))}" data-original="${escHtml(String(val))}" /></div>`;
+        }
+      });
+      dynHtml += '</div>';
+    }
+
+    const editSection = canEdit ? `
+      <div class="tc-card-body" style="${isOpen ? '' : 'display:none'}">
+
+        ${tc.isApproved ? `<div class="approved-lock-banner"><span class="alb-icon">🔒</span>
+          <div class="alb-text"><strong>Approved — Locked</strong>This test case is approved and cannot be edited.</div></div>` : ''}
+
+        <!-- Version strip -->
+        <div class="version-strip">
+          <span class="vs-label">Currently</span>
+          <span class="vs-val">v${tc.version || 1}</span>
+          <span class="vs-sep">→</span>
+          <span class="vs-label">Will save as</span>
+          <span class="vs-val">v${(tc.version||1)+1}</span>
+          <span class="vs-date">Last updated: ${fmtDate(tc.updatedTimestamp)}</span>
+        </div>
+
+        <!-- Approved lock notice or full edit form -->
+        ${tc.isApproved ? '' : `
+
+        <!-- Core fields -->
+        <div class="form-section-heading"><span class="fsh-icon">📋</span>Core Information</div>
+        <div class="form-group">
+          <label>Test Case Name <span style="color:var(--error)">*</span></label>
+          <input type="text" id="upd-name-${tc.testCaseId}" class="forge-input"
+            value="${escHtml(tc.testCaseName)}" data-original="${escHtml(tc.testCaseName)}" />
+          <span class="field-hint" id="upd-hint-name-${tc.testCaseId}">Name cannot be empty.</span>
+        </div>
+        <div class="form-group">
+          <label>Description <span style="color:var(--error)">*</span></label>
+          <textarea id="upd-desc-${tc.testCaseId}" class="forge-textarea" rows="3"
+            data-original="${escHtml(tc.description)}">${escHtml(tc.description)}</textarea>
+          <span class="field-hint" id="upd-hint-desc-${tc.testCaseId}">Description cannot be empty.</span>
+        </div>
+
+        <div class="form-section-heading" style="margin-top:16px;"><span class="fsh-icon">🏷️</span>Classification</div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Project <span style="color:var(--error)">*</span></label>
+            <div class="select-wrapper">
+              <select id="upd-project-${tc.testCaseId}" class="forge-select" data-original="${tc.projectId}">
+                <option value="">— Select Project —</option>${projOpts}
+              </select><span class="select-arrow">▾</span></div>
+          </div>
+          <div class="form-group">
+            <label>Priority <span style="color:var(--error)">*</span></label>
+            <div class="select-wrapper">
+              <select id="upd-priority-${tc.testCaseId}" class="forge-select" data-original="${tc.priority}">
+                <option value="">— Select —</option>
+                <option value="Critical" ${tc.priority==='Critical'?'selected':''}>🔴 Critical</option>
+                <option value="High"     ${tc.priority==='High'    ?'selected':''}>🟠 High</option>
+                <option value="Medium"   ${tc.priority==='Medium'  ?'selected':''}>🟡 Medium</option>
+                <option value="Low"      ${tc.priority==='Low'     ?'selected':''}>🟢 Low</option>
+              </select><span class="select-arrow">▾</span></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Environment <span style="color:var(--error)">*</span></label>
+          <div class="select-wrapper">
+            <select id="upd-env-${tc.testCaseId}" class="forge-select" data-original="${tc.environment}">
+              <option value="">— Select —</option>
+              <option value="Dev"       ${tc.environment==='Dev'      ?'selected':''}>🛠️ Dev</option>
+              <option value="QA"        ${tc.environment==='QA'       ?'selected':''}>🧪 QA</option>
+              <option value="UAT"       ${tc.environment==='UAT'      ?'selected':''}>🔍 UAT</option>
+              <option value="Prod-like" ${tc.environment==='Prod-like'?'selected':''}>🚀 Prod-like</option>
+            </select><span class="select-arrow">▾</span></div>
+        </div>
+        <div class="form-group">
+          <label>Tags</label>
+          <div class="tag-input-wrapper" id="upd-tagwrap-${tc.testCaseId}">
+            ${(tc.tags||[]).map(t=>`<span class="tag-chip">${escHtml(t)}<button class="tag-chip-remove" title="Remove">×</button></span>`).join('')}
+            <input type="text" class="tag-text-input upd-tag-input" data-tcid="${tc.testCaseId}" placeholder="Add tag + Enter…" />
+          </div>
+          <div class="tag-hint">Press Enter or comma to add · Click × to remove</div>
+        </div>
+
+        ${dynHtml}
+
+        `}
+
+        <!-- Action bar -->
+        <div class="form-action-bar" style="border-top:1px solid var(--gray-light);margin-top:16px;">
+          <button class="btn btn-secondary btn-cancel-edit" data-id="${tc.testCaseId}">✕ Cancel</button>
+          ${!tc.isApproved ? `<button class="btn btn-primary btn-save-update" data-id="${tc.testCaseId}">💾 Save Changes</button>` : ''}
+        </div>
+
+      </div>` : `
+      <div class="tc-card-body" style="${isOpen ? '' : 'display:none'}">
+        <div class="perm-denied-banner">
+          <span class="perm-denied-icon">🔒</span>
+          <div class="perm-denied-text"><strong>Cannot Edit</strong>${blocked}</div>
+        </div>
+        <div class="form-action-bar" style="border-top:none;">
+          <button class="btn btn-secondary btn-cancel-edit" data-id="${tc.testCaseId}">✕ Close</button>
+        </div>
+      </div>`;
+
+    return `
+    <div class="tc-card ${isOpen ? 'expanded' : ''}" data-id="${tc.testCaseId}">
+      <div class="tc-card-head">
+        <div class="tc-type-badge">${icon}</div>
+        <div class="tc-card-main">
+          <div class="tc-card-name">${escHtml(tc.testCaseName)}</div>
+          <div class="tc-card-meta">
+            <span class="tc-pill tc-pill-id">${tc.testCaseId}</span>
+            <span class="tc-pill ${statusCls}">${statusLabel}</span>
+            <span class="tc-pill ${priCls}">${tc.priority||'—'}</span>
+            <span class="tc-pill tc-pill-env">${tc.environment||'—'}</span>
+            <span class="tc-pill tc-pill-type">${tc.testingType||'—'}</span>
+            ${!canEdit ? `<span class="tc-pill" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;">🔒 Locked</span>` : ''}
+          </div>
+        </div>
+        <div class="tc-card-right">
+          <div class="tc-date">
+            <div>${fmtDateShort(tc.updatedTimestamp||tc.createdTimestamp)}</div>
+            <div style="color:var(--gray-mid);font-size:9px;">v${tc.version||1} · ${escHtml(tc.createdByName||tc.createdBy)}</div>
+          </div>
+          <button class="tc-expand-btn btn-open-edit ${isOpen?'open':''}" data-id="${tc.testCaseId}" title="${canEdit?'Edit':'View'}">
+            ${canEdit ? '✏️' : '▾'}
+          </button>
+        </div>
+      </div>
+      ${editSection}
+    </div>`;
+  }
+
+  // ── Toggle a card open/closed ─────────────────────────────
+  function toggleEditCard(tcId) {
+    if (activeEditId === tcId) { cancelEdit(tcId); return; }
+    if (hasUnsaved && activeEditId) {
+      pendingOpenId = tcId;
+      openModal('discardModal'); return;
+    }
+    openCard(tcId);
+  }
+
+  function openCard(tcId) {
+    activeEditId = tcId;
+    hasUnsaved   = false;
+    document.getElementById('unsavedBadge').classList.remove('visible');
+    render();
+    // Wire tag inputs and step builders after render
+    wireTagInputsForUpdate(tcId);
+    wireStepBuildersForUpdate();
+    wireChangedHighlights(tcId);
+    // Scroll card into view
+    setTimeout(() => {
+      const el = document.querySelector(`[data-id="${tcId}"]`);
+      el?.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    }, 100);
+  }
+
+  function cancelEdit(tcId) {
+    activeEditId = null; hasUnsaved = false;
+    document.getElementById('unsavedBadge').classList.remove('visible');
+    render();
+  }
+
+  // ── Change detection highlights ───────────────────────────
+  function wireChangedHighlights(tcId) {
+    const card = document.querySelector(`[data-id="${tcId}"]`);
+    if (!card) return;
+    card.querySelectorAll('input[data-original],textarea[data-original],select[data-original]').forEach(el => {
+      el.addEventListener('input', () => markChanged(el));
+      el.addEventListener('change', () => markChanged(el));
+    });
+  }
+
+  function markChanged(el) {
+    const changed = el.value !== el.dataset.original;
+    el.classList.toggle('field-changed', changed);
+    checkAnyUnsaved();
+  }
+
+  function checkAnyUnsaved() {
+    const card = document.querySelector(`[data-id="${activeEditId}"]`);
+    hasUnsaved = card ? card.querySelectorAll('.field-changed').length > 0 : false;
+    document.getElementById('unsavedBadge').classList.toggle('visible', hasUnsaved);
+  }
+
+  // ── Tag input wiring for update cards ────────────────────
+  function wireTagInputsForUpdate(tcId) {
+    const wrapper  = document.getElementById(`upd-tagwrap-${tcId}`);
+    if (!wrapper) return;
+    const tagInput = wrapper.querySelector('.upd-tag-input');
+    if (!tagInput) return;
+
+    // Wire remove buttons on existing chips
+    wrapper.querySelectorAll('.tag-chip-remove').forEach(btn => {
+      btn.addEventListener('click', () => { btn.closest('.tag-chip').remove(); hasUnsaved = true; document.getElementById('unsavedBadge').classList.add('visible'); });
+    });
+
+    tagInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const v = tagInput.value.trim().replace(/,/g,'');
+        if (!v) return;
+        const chip = document.createElement('span');
+        chip.className = 'tag-chip';
+        chip.innerHTML = `${escHtml(v)}<button class="tag-chip-remove" title="Remove">×</button>`;
+        chip.querySelector('button').addEventListener('click', () => chip.remove());
+        wrapper.insertBefore(chip, tagInput);
+        tagInput.value = '';
+        hasUnsaved = true;
+        document.getElementById('unsavedBadge').classList.add('visible');
+      } else if (e.key === 'Backspace' && !tagInput.value) {
+        wrapper.querySelector('.tag-chip:last-of-type')?.remove();
+      }
+    });
+    wrapper.addEventListener('click', () => tagInput.focus());
+  }
+
+  // ── Step builder wiring for update cards ─────────────────
+  function wireStepBuildersForUpdate() {
+    document.querySelectorAll('.steps-list').forEach(list => {
+      list.querySelectorAll('.step-remove').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const row = btn.closest('.step-row');
+          if (list.children.length > 1) { row.remove(); renumberSteps(list); hasUnsaved = true; document.getElementById('unsavedBadge').classList.add('visible'); }
+        });
+      });
+    });
+    document.querySelectorAll('.add-step-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const list = document.getElementById(btn.dataset.stepsId);
+        if (!list) return;
+        const num = list.children.length + 1;
+        const row = document.createElement('div'); row.className = 'step-row';
+        row.innerHTML = `<span class="step-number">${num}.</span><input type="text" class="step-input" placeholder="Step ${num}…" /><button class="step-remove" title="Remove">×</button>`;
+        row.querySelector('.step-remove').addEventListener('click', () => {
+          if (list.children.length > 1) { row.remove(); renumberSteps(list); }
+        });
+        list.appendChild(row);
+        row.querySelector('input').focus();
+        hasUnsaved = true;
+        document.getElementById('unsavedBadge').classList.add('visible');
+      });
+    });
+  }
+
+  function renumberSteps(list) {
+    list.querySelectorAll('.step-number').forEach((n,i) => { n.textContent = `${i+1}.`; });
+  }
+
+  // ── Collect updated values from open edit card ────────────
+  function collectUpdates(tcId) {
+    const tc      = allTestCases.find(t => t.testCaseId === tcId);
+    const nameEl  = document.getElementById(`upd-name-${tcId}`);
+    const descEl  = document.getElementById(`upd-desc-${tcId}`);
+    const projEl  = document.getElementById(`upd-project-${tcId}`);
+    const prioEl  = document.getElementById(`upd-priority-${tcId}`);
+    const envEl   = document.getElementById(`upd-env-${tcId}`);
+    const wrap    = document.getElementById(`upd-tagwrap-${tcId}`);
+
+    let valid = true;
+    const setErr = (el, hintId, msg) => {
+      el?.classList.add('input-error');
+      const h = document.getElementById(hintId); if (h) { h.textContent=msg; h.classList.add('visible'); }
+      valid = false;
+    };
+    const clearErr = el => el?.classList.remove('input-error');
+
+    const name = nameEl?.value.trim() || '';
+    if (!name) setErr(nameEl, `upd-hint-name-${tcId}`, 'Name cannot be empty.'); else clearErr(nameEl);
+
+    const desc = descEl?.value.trim() || '';
+    if (!desc) setErr(descEl, `upd-hint-desc-${tcId}`, 'Description cannot be empty.'); else clearErr(descEl);
+
+    // Collect dynamic data
+    const dynConfig = DYNAMIC_FIELD_CONFIGS[tc?.testingTypeId];
+    const dynData   = { ...(tc?.dynamicData || {}) };
+    if (dynConfig) {
+      dynConfig.fields.forEach(f => {
+        if (f.type === 'steps') {
+          const list  = document.getElementById(`upd-steps-${tcId}-${f.id}`);
+          if (list) dynData[f.id] = Array.from(list.querySelectorAll('.step-input')).map(i => i.value.trim()).filter(Boolean);
+        } else {
+          const el = document.getElementById(`upd-dyn-${tcId}-${f.id}`);
+          if (el) dynData[f.id] = el.value.trim();
+        }
+      });
+    }
+
+    // Collect tags
+    const tags = wrap ? Array.from(wrap.querySelectorAll('.tag-chip')).map(c => c.textContent.replace('×','').trim()).filter(Boolean) : (tc?.tags || []);
+
+    return {
+      valid,
+      updates: {
+        testCaseName:      name,
+        description:       desc,
+        projectId:         projEl?.value  || tc?.projectId,
+        priority:          prioEl?.value  || tc?.priority,
+        environment:       envEl?.value   || tc?.environment,
+        tags,
+        dynamicData:       dynData,
+        lastUpdatedByName: user.name,
+      }
+    };
+  }
+
+  // ── Save the update ───────────────────────────────────────
+  async function saveUpdate(tcId) {
+    const { valid, updates } = collectUpdates(tcId);
+    if (!valid) { showToast('⚠ Please fix the highlighted fields.', 'error'); return; }
+
+    const btn = document.querySelector(`.btn-save-update[data-id="${tcId}"]`);
+    setLoading(btn, true);
+    try {
+      const res  = await fetch(`${API_BASE}/test-cases/${tcId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates, userPosition: user.position, employeeId: user.employeeId })
+      });
+      const data = await res.json();
+      setLoading(btn, false, '💾 Save Changes');
+      if (data.success) {
+        // Update local state
+        const idx = allTestCases.findIndex(t => t.testCaseId === tcId);
+        if (idx !== -1) allTestCases[idx] = data.testCase;
+        activeEditId = null; hasUnsaved = false;
+        document.getElementById('unsavedBadge').classList.remove('visible');
+        showToast(`✅ Test case updated to v${data.testCase.version}`, 'success');
+        render();
+      } else {
+        showToast(`✗ ${data.message}`, 'error');
+      }
+    } catch {
+      setLoading(btn, false, '💾 Save Changes');
+      showToast('⚠ Server unreachable.', 'error');
+    }
+  }
+
+  // ── Discard modal ─────────────────────────────────────────
+  document.getElementById('discardCancel')?.addEventListener('click', () => {
+    pendingOpenId = null; closeModal('discardModal');
+  });
+  document.getElementById('discardConfirm')?.addEventListener('click', () => {
+    closeModal('discardModal');
+    const id = pendingOpenId; pendingOpenId = null;
+    activeEditId = null; hasUnsaved = false;
+    openCard(id);
+  });
+
+  // ── Filter + sort wiring ──────────────────────────────────
+  wireFilterInputs(render);
+  wireSortButtons((f, d) => { sortField = f; sortDir = d; render(); });
+
+  loadTestCases();
+}
+
+// ═══════════════════════════════════════════════════════════
+// DELETE TEST CASES PAGE  (delete_test.html)
+// ═══════════════════════════════════════════════════════════
+
+function initDeleteTestPage() {
+  if (!window.location.pathname.includes('delete_test')) return;
+
+  const user = JSON.parse(sessionStorage.getItem('forge_user') || '{}');
+  if (!user.name) { window.location.href = 'index.html'; return; }
+  wireNavBar(user);
+
+  const perms      = PERMISSIONS[user.position] || PERMISSIONS['Employee'];
+  const deleteScope = perms.delete;
+
+  // ── No permission state ───────────────────────────────────
+  if (!deleteScope) {
+    document.getElementById('noPermState').style.display     = 'block';
+    document.getElementById('deleteInterface').style.display = 'none';
+    document.getElementById('noPermRole').textContent        = user.position;
+    return;
+  }
+
+  // ── Show delete type warning banner ──────────────────────
+  const deleteDescriptions = {
+    soft_project: { title:'Soft Delete — Project Scope',      desc:'Test cases will be marked as deleted but not permanently removed. Only cases within your project scope can be deleted.',   pillText:'SOFT DELETE', pillCls:'del-type-soft' },
+    soft:         { title:'Soft Delete',                       desc:'Test cases will be marked as deleted but can be restored by Senior Manager and above.',                                    pillText:'SOFT DELETE', pillCls:'del-type-soft' },
+    soft_restore: { title:'Soft Delete + Restore',             desc:'You can soft-delete cases and restore previously soft-deleted ones.',                                                       pillText:'SOFT + RESTORE', pillCls:'del-type-soft' },
+    permanent:    { title:'Permanent Delete — Director Access',desc:'Test cases will be permanently removed from the system and cannot be recovered.',                                          pillText:'PERMANENT DELETE', pillCls:'del-type-hard' },
+  };
+  const dd = deleteDescriptions[deleteScope] || deleteDescriptions.soft;
+  document.getElementById('deleteWarnTitle').textContent = dd.title;
+  document.getElementById('deleteWarnDesc').textContent  = dd.desc;
+  document.getElementById('deleteTypePill').innerHTML    = `<span class="${dd.pillCls}">${dd.pillText}</span>`;
+
+  let allTestCases = [];
+  let projectsMap  = {};
+  let sortField    = 'createdTimestamp';
+  let sortDir      = 'desc';
+  let pendingDelete = null; // { tcId, name }
+
+  loadProjectsIntoSelect('filterProject').then(m => { projectsMap = m; });
+
+  // ── Fetch test cases ──────────────────────────────────────
+  async function loadTestCases() {
+    showSkeletons('tcCardList');
+    try {
+      const params = new URLSearchParams({ userPosition: user.position, employeeId: user.employeeId });
+      const res    = await fetch(`${API_BASE}/test-cases?${params}`);
+      const data   = await res.json();
+      if (data.success) { allTestCases = data.testCases; render(); }
+      else showListError(data.message);
+    } catch { showListError('Could not connect to server. Make sure it is running on port 3000.'); }
+  }
+
+  function showListError(msg) {
+    document.getElementById('tcCardList').innerHTML = `
+      <div class="empty-state"><span class="empty-state-icon">⚠️</span>
+        <div class="empty-state-title">Error</div><div class="empty-state-sub">${msg}</div></div>`;
+  }
+
+  // ── Determine if user can delete a specific tc ────────────
+  function canDeleteThisTc(tc) {
+    if (!deleteScope) return false;
+    if (deleteScope === 'soft_project') {
+      const lowerTiers = Object.entries(PERMISSIONS).filter(([,p]) => p.tier <= perms.tier).map(([pos]) => pos);
+      return lowerTiers.includes(tc.creatorPosition) || tc.createdBy === user.employeeId;
+    }
+    return true; // Manager and above
+  }
+
+  // ── Render ────────────────────────────────────────────────
+  function render() {
+    const filtered = sortCases(applyFilters(allTestCases, projectsMap), sortField, sortDir);
+    const list     = document.getElementById('tcCardList');
+    const countEl  = document.getElementById('resultsCount');
+    if (countEl) countEl.innerHTML = `Showing <strong>${filtered.length}</strong> of <strong>${allTestCases.length}</strong> test cases`;
+
+    if (!filtered.length) {
+      list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">🗑️</span>
+        <div class="empty-state-title">No Test Cases Found</div>
+        <div class="empty-state-sub">${allTestCases.length === 0
+          ? 'There are no test cases to delete.'
+          : 'No results match your filters.'}</div></div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(tc => buildDeleteCard(tc)).join('');
+
+    // Wire expand toggles
+    list.querySelectorAll('.tc-card-head').forEach(head => {
+      head.addEventListener('click', e => {
+        if (e.target.closest('.btn-danger,.btn-secondary')) return;
+        const card = head.closest('.tc-card');
+        const btn  = head.querySelector('.tc-expand-btn');
+        card.classList.toggle('expanded');
+        btn.classList.toggle('open');
+      });
+    });
+
+    // Wire delete buttons
+    list.querySelectorAll('.btn-trigger-delete').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const tcId   = btn.dataset.id;
+        const tcName = btn.dataset.name;
+        triggerDeleteModal(tcId, tcName);
+      });
+    });
+  }
+
+  function buildDeleteCard(tc) {
+    const icon       = typeIcon(tc.testingTypeId || tc.testingType);
+    const priCls     = `tc-pill-${(tc.priority||'low').toLowerCase()}`;
+    const statusCls  = tc.isApproved ? 'tc-pill-approved' : (tc.status==='Draft' ? 'tc-pill-draft' : 'tc-pill-pending');
+    const statusLabel= tc.isApproved ? '✓ Approved' : (tc.status || 'Draft');
+    const projName   = projectsMap[tc.projectId] || tc.projectId || '—';
+    const canDel     = canDeleteThisTc(tc);
+    const isPermanent= deleteScope === 'permanent';
+
+    return `
+    <div class="tc-card" data-id="${tc.testCaseId}">
+      <div class="tc-card-head">
+        <div class="tc-type-badge">${icon}</div>
+        <div class="tc-card-main">
+          <div class="tc-card-name">${escHtml(tc.testCaseName)}</div>
+          <div class="tc-card-meta">
+            <span class="tc-pill tc-pill-id">${tc.testCaseId}</span>
+            <span class="tc-pill ${statusCls}">${statusLabel}</span>
+            <span class="tc-pill ${priCls}">${tc.priority||'—'}</span>
+            <span class="tc-pill tc-pill-env">${tc.environment||'—'}</span>
+            <span class="tc-pill tc-pill-type">${tc.testingType||'—'}</span>
+          </div>
+        </div>
+        <div class="tc-card-right">
+          <div class="tc-date">
+            <div>${fmtDateShort(tc.createdTimestamp)}</div>
+            <div style="color:var(--gray-mid);font-size:9px;">by ${escHtml(tc.createdByName||tc.createdBy)}</div>
+          </div>
+          <button class="tc-expand-btn" title="Expand details">▾</button>
+        </div>
+      </div>
+
+      <!-- Expanded detail + delete action row -->
+      <div class="tc-card-body">
+        <div class="tc-detail-grid">
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Test Case ID</div>
+            <div class="tc-detail-value mono">${tc.testCaseId}</div>
+          </div>
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Project</div>
+            <div class="tc-detail-value">${escHtml(projName)}</div>
+          </div>
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Testing Type</div>
+            <div class="tc-detail-value">${icon} ${escHtml(tc.testingType||'—')}</div>
+          </div>
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Priority</div>
+            <div class="tc-detail-value">${escHtml(tc.priority||'—')}</div>
+          </div>
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Environment</div>
+            <div class="tc-detail-value">${escHtml(tc.environment||'—')}</div>
+          </div>
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Version</div>
+            <div class="tc-detail-value">v${tc.version||1}</div>
+          </div>
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Approval</div>
+            <div class="tc-detail-value">${tc.isApproved ? '✅ Approved' : '📝 Not Approved'}</div>
+          </div>
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Created By</div>
+            <div class="tc-detail-value">${escHtml(tc.createdByName||tc.createdBy)}</div>
+          </div>
+          <div class="tc-detail-field" style="grid-column:1/-1;">
+            <div class="tc-detail-label">Description</div>
+            <div class="tc-detail-value">${escHtml(tc.description||'—')}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete action row always visible at bottom -->
+      <div class="tc-card-del-row">
+        ${!canDel
+          ? `<span style="font-family:var(--font-mono);font-size:10px;color:var(--gray-mid);">🔒 Outside your delete scope</span>`
+          : `<span class="${isPermanent ? 'del-type-hard' : 'del-type-soft'}">${isPermanent ? '⚠ Permanent' : '⚠ Soft Delete'}</span>
+             <button class="btn btn-danger btn-sm btn-trigger-delete"
+               data-id="${tc.testCaseId}"
+               data-name="${escHtml(tc.testCaseName)}">
+               🗑️ ${isPermanent ? 'Delete Permanently' : 'Delete'}
+             </button>`
+        }
+      </div>
+    </div>`;
+  }
+
+  // ── Confirm modal flow ────────────────────────────────────
+  function triggerDeleteModal(tcId, tcName) {
+    pendingDelete = { tcId, tcName };
+    const isPermanent = deleteScope === 'permanent';
+    document.getElementById('confirmTcId').textContent   = tcId;
+    document.getElementById('confirmTcName').textContent = tcName;
+    document.getElementById('confirmDeleteMsg').textContent = isPermanent
+      ? 'This will permanently remove this test case from the system. This action CANNOT be undone.'
+      : 'This test case will be marked as deleted and hidden from views. It can be restored by a Senior Manager or Director.';
+    openModal('confirmDeleteModal');
+  }
+
+  document.getElementById('modalCancelDelete')?.addEventListener('click', () => {
+    pendingDelete = null; closeModal('confirmDeleteModal');
+  });
+  document.getElementById('confirmDeleteModal')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) { pendingDelete = null; closeModal('confirmDeleteModal'); }
+  });
+
+  document.getElementById('modalConfirmDelete')?.addEventListener('click', async () => {
+    if (!pendingDelete) return;
+    const { tcId, tcName } = pendingDelete;
+    const btn = document.getElementById('modalConfirmDelete');
+    setLoading(btn, true);
+    try {
+      const res  = await fetch(`${API_BASE}/test-cases/${tcId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userPosition: user.position, employeeId: user.employeeId, deletedByName: user.name })
+      });
+      const data = await res.json();
+      setLoading(btn, false, '🗑️ Delete');
+      closeModal('confirmDeleteModal');
+      pendingDelete = null;
+      if (data.success) {
+        // Remove from local list
+        allTestCases = allTestCases.filter(tc => tc.testCaseId !== tcId);
+        showToast(`🗑️ "${tcName}" ${data.deleteType === 'permanently deleted' ? 'permanently deleted' : 'soft deleted'}.`, 'success');
+        // Flash the removed card briefly before re-render
+        const card = document.querySelector(`[data-id="${tcId}"]`);
+        if (card) { card.classList.add('del-success-flash'); setTimeout(() => render(), 400); }
+        else render();
+      } else {
+        showToast(`✗ ${data.message}`, 'error');
+      }
+    } catch {
+      setLoading(btn, false, '🗑️ Delete');
+      closeModal('confirmDeleteModal');
+      showToast('⚠ Server unreachable.', 'error');
+    }
+  });
+
+  // ── Filter + sort wiring ──────────────────────────────────
+  wireFilterInputs(render);
+  wireSortButtons((f, d) => { sortField = f; sortDir = d; render(); });
+
+  loadTestCases();
+}
+
+// ═══════════════════════════════════════════════════════════
 // INIT — route to correct page
 // ═══════════════════════════════════════════════════════════
 
@@ -1081,5 +1987,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if      (page.includes('register.html'))   initRegisterPage();
   else if (page.includes('create_test.html'))initCreateTestPage();
   else if (page.includes('read_test.html'))  initReadTestPage();
+  else if (page.includes('update_test.html'))initUpdateTestPage();
+  else if (page.includes('delete_test.html'))initDeleteTestPage();
   else                                       initLoginPage();
 });
