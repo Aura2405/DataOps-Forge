@@ -11,30 +11,30 @@ const API_BASE = 'http://localhost:3000/api';
 // ═══════════════════════════════════════════════════════════
 
 const PERMISSIONS = {
-  'Employee':       { create: true, read: 'own',          update: 'own_drafts',   delete: false,          approve: false,        tier: 1, additional: ['Submit for Review']                        },
-  'Senior Employee':{ create: true, read: 'team',         update: 'team',         delete: false,          approve: 'review_only',tier: 2, additional: ['Review & Comment']                         },
-  'Project Lead':   { create: true, read: 'project',      update: 'project',      delete: 'soft_project', approve: true,         tier: 3, additional: ['Approve/Reject Test Cases']                 },
-  'Manager':        { create: true, read: 'department',   update: 'department',   delete: 'soft',         approve: true,         tier: 4, additional: ['Manage Users & Assign Projects']             },
-  'Senior Manager': { create: true, read: 'multi_project',update: 'multi_project',delete: 'soft_restore', approve: true,         tier: 5, additional: ['Create Templates','Generate Reports']        },
-  'Director':       { create: true, read: 'organization', update: 'organization', delete: 'permanent',    approve: true,         tier: 6, additional: ['Governance','Compliance','Audit Control']    },
+  'Employee': { create: true, read: 'own', update: 'own_drafts', delete: false, approve: false, tier: 1, additional: ['Submit for Review'] },
+  'Senior Employee': { create: true, read: 'team', update: 'team', delete: false, approve: 'review_only', tier: 2, additional: ['Review & Comment'] },
+  'Project Lead': { create: true, read: 'project', update: 'project', delete: 'soft_project', approve: true, tier: 3, additional: ['Approve/Reject Test Cases'] },
+  'Manager': { create: true, read: 'department', update: 'department', delete: 'soft', approve: true, tier: 4, additional: ['Manage Users & Assign Projects'] },
+  'Senior Manager': { create: true, read: 'multi_project', update: 'multi_project', delete: 'soft_restore', approve: true, tier: 5, additional: ['Create Templates', 'Generate Reports'] },
+  'Director': { create: true, read: 'organization', update: 'organization', delete: 'permanent', approve: true, tier: 6, additional: ['Governance', 'Compliance', 'Audit Control'] },
 };
 
 const PERMISSION_DESCRIPTIONS = {
-  'Employee':       { read: 'Own Test Cases',       update: 'Own Drafts Only'   },
-  'Senior Employee':{ read: 'Team Test Cases',      update: 'Team Test Cases'   },
-  'Project Lead':   { read: 'Project Test Cases',   update: 'Project Scope'     },
-  'Manager':        { read: 'Department / Project', update: 'Department Scope'  },
-  'Senior Manager': { read: 'Multiple Projects',    update: 'Multiple Projects' },
-  'Director':       { read: 'Organization-wide',    update: 'Organization-wide' },
+  'Employee': { read: 'Own Test Cases', update: 'Own Drafts Only' },
+  'Senior Employee': { read: 'Team Test Cases', update: 'Team Test Cases' },
+  'Project Lead': { read: 'Project Test Cases', update: 'Project Scope' },
+  'Manager': { read: 'Department / Project', update: 'Department Scope' },
+  'Senior Manager': { read: 'Multiple Projects', update: 'Multiple Projects' },
+  'Director': { read: 'Organization-wide', update: 'Organization-wide' },
 };
 
 const DELETE_DESCRIPTIONS = {
-  'Employee':       { icon: '❌', label: 'No Delete',              cls: 'pb-denied'  },
-  'Senior Employee':{ icon: '❌', label: 'No Delete',              cls: 'pb-denied'  },
-  'Project Lead':   { icon: '⚠️', label: 'Soft Delete (Project)',  cls: 'pb-partial' },
-  'Manager':        { icon: '✅', label: 'Soft Delete',            cls: 'pb-allowed' },
-  'Senior Manager': { icon: '✅', label: 'Soft Delete + Restore',  cls: 'pb-allowed' },
-  'Director':       { icon: '✅', label: 'Permanent Delete',       cls: 'pb-allowed' },
+  'Employee': { icon: '❌', label: 'No Delete', cls: 'pb-denied' },
+  'Senior Employee': { icon: '❌', label: 'No Delete', cls: 'pb-denied' },
+  'Project Lead': { icon: '⚠️', label: 'Soft Delete (Project)', cls: 'pb-partial' },
+  'Manager': { icon: '✅', label: 'Soft Delete', cls: 'pb-allowed' },
+  'Senior Manager': { icon: '✅', label: 'Soft Delete + Restore', cls: 'pb-allowed' },
+  'Director': { icon: '✅', label: 'Permanent Delete', cls: 'pb-allowed' },
 };
 
 function canCreate(position) { return PERMISSIONS[position]?.create === true; }
@@ -44,14 +44,14 @@ function canCreate(position) { return PERMISSIONS[position]?.create === true; }
 // ═══════════════════════════════════════════════════════════
 
 const TESTING_TYPES = [
-  { id: 'functional',  label: 'Functional',  icon: '🧩' },
-  { id: 'api',         label: 'API Testing', icon: '🔌' },
+  { id: 'functional', label: 'Functional', icon: '🧩' },
+  { id: 'api', label: 'API Testing', icon: '🔌' },
   { id: 'performance', label: 'Performance', icon: '⚡' },
-  { id: 'security',    label: 'Security',    icon: '🛡️' },
-  { id: 'ui',          label: 'UI / UX',     icon: '🖥️' },
+  { id: 'security', label: 'Security', icon: '🛡️' },
+  { id: 'ui', label: 'UI / UX', icon: '🖥️' },
   { id: 'integration', label: 'Integration', icon: '🔗' },
-  { id: 'regression',  label: 'Regression',  icon: '🔄' },
-  { id: 'smoke',       label: 'Smoke',       icon: '💨' },
+  { id: 'regression', label: 'Regression', icon: '🔄' },
+  { id: 'smoke', label: 'Smoke', icon: '💨' },
 ];
 
 function typeIcon(typeIdOrLabel) {
@@ -63,85 +63,85 @@ const DYNAMIC_FIELD_CONFIGS = {
   functional: {
     label: 'Functional Testing Fields',
     fields: [
-      { id: 'preconditions',  label: 'Preconditions',   type: 'textarea', placeholder: 'e.g. User account exists and is active', required: false },
-      { id: 'testSteps',      label: 'Test Steps',      type: 'steps',    placeholder: 'e.g. Navigate to login page',           required: true  },
-      { id: 'inputData',      label: 'Input Data',      type: 'textarea', placeholder: 'e.g. Username: admin, Password: test123',required: false },
-      { id: 'expectedResult', label: 'Expected Result', type: 'text',     placeholder: 'e.g. Dashboard displayed successfully', required: true  },
-      { id: 'postconditions', label: 'Postconditions',  type: 'textarea', placeholder: 'e.g. Session token stored in cookies',  required: false },
+      { id: 'preconditions', label: 'Preconditions', type: 'textarea', placeholder: 'e.g. User account exists and is active', required: false },
+      { id: 'testSteps', label: 'Test Steps', type: 'steps', placeholder: 'e.g. Navigate to login page', required: true },
+      { id: 'inputData', label: 'Input Data', type: 'textarea', placeholder: 'e.g. Username: admin, Password: test123', required: false },
+      { id: 'expectedResult', label: 'Expected Result', type: 'text', placeholder: 'e.g. Dashboard displayed successfully', required: true },
+      { id: 'postconditions', label: 'Postconditions', type: 'textarea', placeholder: 'e.g. Session token stored in cookies', required: false },
     ]
   },
   api: {
     label: 'API Testing Fields',
     fields: [
-      { id: 'endpointUrl',      label: 'Endpoint URL',         type: 'text',     placeholder: 'https://api.example.com/v1/login',     required: true  },
-      { id: 'httpMethod',       label: 'HTTP Method',          type: 'select',   options: ['GET','POST','PUT','PATCH','DELETE','HEAD'], required: true  },
-      { id: 'requestHeaders',   label: 'Request Headers',      type: 'textarea', placeholder: 'Content-Type: application/json',        required: false },
-      { id: 'requestBody',      label: 'Request Body (JSON)',  type: 'textarea', placeholder: '{\n  "username": "admin"\n}',            required: false },
-      { id: 'expectedResponse', label: 'Expected Response',    type: 'textarea', placeholder: '{\n  "token": "..."\n}',                required: false },
-      { id: 'expectedStatus',   label: 'Expected Status Code', type: 'text',     placeholder: 'e.g. 200 OK',                          required: true  },
+      { id: 'endpointUrl', label: 'Endpoint URL', type: 'text', placeholder: 'https://api.example.com/v1/login', required: true },
+      { id: 'httpMethod', label: 'HTTP Method', type: 'select', options: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'], required: true },
+      { id: 'requestHeaders', label: 'Request Headers', type: 'textarea', placeholder: 'Content-Type: application/json', required: false },
+      { id: 'requestBody', label: 'Request Body (JSON)', type: 'textarea', placeholder: '{\n  "username": "admin"\n}', required: false },
+      { id: 'expectedResponse', label: 'Expected Response', type: 'textarea', placeholder: '{\n  "token": "..."\n}', required: false },
+      { id: 'expectedStatus', label: 'Expected Status Code', type: 'text', placeholder: 'e.g. 200 OK', required: true },
     ]
   },
   performance: {
     label: 'Performance Testing Fields',
     fields: [
-      { id: 'concurrentUsers',      label: 'Concurrent Users',           type: 'text', placeholder: 'e.g. 100',        required: true  },
-      { id: 'rampUpTime',           label: 'Ramp-Up Time (seconds)',     type: 'text', placeholder: 'e.g. 60',         required: true  },
-      { id: 'duration',             label: 'Test Duration (seconds)',    type: 'text', placeholder: 'e.g. 300',        required: true  },
-      { id: 'expectedResponseTime', label: 'Expected Response Time (ms)',type: 'text', placeholder: 'e.g. < 500ms',   required: true  },
-      { id: 'throughput',           label: 'Expected Throughput (req/s)',type: 'text', placeholder: 'e.g. 200 req/s', required: false },
-      { id: 'errorThreshold',       label: 'Acceptable Error Rate (%)', type: 'text', placeholder: 'e.g. < 1%',      required: false },
+      { id: 'concurrentUsers', label: 'Concurrent Users', type: 'text', placeholder: 'e.g. 100', required: true },
+      { id: 'rampUpTime', label: 'Ramp-Up Time (seconds)', type: 'text', placeholder: 'e.g. 60', required: true },
+      { id: 'duration', label: 'Test Duration (seconds)', type: 'text', placeholder: 'e.g. 300', required: true },
+      { id: 'expectedResponseTime', label: 'Expected Response Time (ms)', type: 'text', placeholder: 'e.g. < 500ms', required: true },
+      { id: 'throughput', label: 'Expected Throughput (req/s)', type: 'text', placeholder: 'e.g. 200 req/s', required: false },
+      { id: 'errorThreshold', label: 'Acceptable Error Rate (%)', type: 'text', placeholder: 'e.g. < 1%', required: false },
     ]
   },
   security: {
     label: 'Security Testing Fields',
     fields: [
-      { id: 'threatVector',    label: 'Threat Vector',              type: 'text',     placeholder: 'e.g. SQL Injection, XSS',           required: true  },
-      { id: 'attackScenario',  label: 'Attack Scenario',            type: 'textarea', placeholder: 'Describe the attack flow…',          required: true  },
-      { id: 'targetEndpoint',  label: 'Target Endpoint/Component',  type: 'text',     placeholder: 'e.g. /api/auth/login',              required: false },
-      { id: 'tools',           label: 'Tools / Frameworks',         type: 'text',     placeholder: 'e.g. OWASP ZAP, Burp Suite',        required: false },
-      { id: 'expectedBehavior',label: 'Expected Secure Behavior',   type: 'textarea', placeholder: 'e.g. Returns 403, no data leaked',  required: true  },
-      { id: 'cvssScore',       label: 'CVSS Severity (estimated)',  type: 'select',   options: ['Low','Medium','High','Critical'],       required: false },
+      { id: 'threatVector', label: 'Threat Vector', type: 'text', placeholder: 'e.g. SQL Injection, XSS', required: true },
+      { id: 'attackScenario', label: 'Attack Scenario', type: 'textarea', placeholder: 'Describe the attack flow…', required: true },
+      { id: 'targetEndpoint', label: 'Target Endpoint/Component', type: 'text', placeholder: 'e.g. /api/auth/login', required: false },
+      { id: 'tools', label: 'Tools / Frameworks', type: 'text', placeholder: 'e.g. OWASP ZAP, Burp Suite', required: false },
+      { id: 'expectedBehavior', label: 'Expected Secure Behavior', type: 'textarea', placeholder: 'e.g. Returns 403, no data leaked', required: true },
+      { id: 'cvssScore', label: 'CVSS Severity (estimated)', type: 'select', options: ['Low', 'Medium', 'High', 'Critical'], required: false },
     ]
   },
   ui: {
     label: 'UI / UX Testing Fields',
     fields: [
-      { id: 'component',     label: 'Component / Page',    type: 'text',     placeholder: 'e.g. Login Modal',                    required: true  },
-      { id: 'browser',       label: 'Browser(s)',          type: 'text',     placeholder: 'e.g. Chrome 120, Firefox 121',        required: false },
-      { id: 'viewport',      label: 'Viewport / Device',   type: 'text',     placeholder: 'e.g. 1440×900, iPhone 14',            required: false },
-      { id: 'testSteps',     label: 'UI Test Steps',       type: 'steps',    placeholder: 'e.g. Click the Login button',         required: true  },
-      { id: 'expectedUI',    label: 'Expected UI Behaviour',type: 'textarea',placeholder: 'e.g. Modal closes and user redirected',required: true  },
-      { id: 'accessibility', label: 'Accessibility Check', type: 'textarea', placeholder: 'e.g. WCAG AA contrast',               required: false },
+      { id: 'component', label: 'Component / Page', type: 'text', placeholder: 'e.g. Login Modal', required: true },
+      { id: 'browser', label: 'Browser(s)', type: 'text', placeholder: 'e.g. Chrome 120, Firefox 121', required: false },
+      { id: 'viewport', label: 'Viewport / Device', type: 'text', placeholder: 'e.g. 1440×900, iPhone 14', required: false },
+      { id: 'testSteps', label: 'UI Test Steps', type: 'steps', placeholder: 'e.g. Click the Login button', required: true },
+      { id: 'expectedUI', label: 'Expected UI Behaviour', type: 'textarea', placeholder: 'e.g. Modal closes and user redirected', required: true },
+      { id: 'accessibility', label: 'Accessibility Check', type: 'textarea', placeholder: 'e.g. WCAG AA contrast', required: false },
     ]
   },
   integration: {
     label: 'Integration Testing Fields',
     fields: [
-      { id: 'systemA',         label: 'System A (Source)',        type: 'text',     placeholder: 'e.g. Payment Gateway',             required: true  },
-      { id: 'systemB',         label: 'System B (Target)',        type: 'text',     placeholder: 'e.g. Order Management System',     required: true  },
-      { id: 'integrationFlow', label: 'Integration Flow',         type: 'textarea', placeholder: 'Describe the data/event flow…',   required: true  },
-      { id: 'dataFormat',      label: 'Data Format / Protocol',   type: 'text',     placeholder: 'e.g. REST / JSON, SOAP / XML',    required: false },
-      { id: 'preconditions',   label: 'Preconditions',            type: 'textarea', placeholder: 'e.g. Both systems online & seeded',required: false },
-      { id: 'expectedResult',  label: 'Expected Outcome',         type: 'textarea', placeholder: 'e.g. Order confirmed in OMS',     required: true  },
+      { id: 'systemA', label: 'System A (Source)', type: 'text', placeholder: 'e.g. Payment Gateway', required: true },
+      { id: 'systemB', label: 'System B (Target)', type: 'text', placeholder: 'e.g. Order Management System', required: true },
+      { id: 'integrationFlow', label: 'Integration Flow', type: 'textarea', placeholder: 'Describe the data/event flow…', required: true },
+      { id: 'dataFormat', label: 'Data Format / Protocol', type: 'text', placeholder: 'e.g. REST / JSON, SOAP / XML', required: false },
+      { id: 'preconditions', label: 'Preconditions', type: 'textarea', placeholder: 'e.g. Both systems online & seeded', required: false },
+      { id: 'expectedResult', label: 'Expected Outcome', type: 'textarea', placeholder: 'e.g. Order confirmed in OMS', required: true },
     ]
   },
   regression: {
     label: 'Regression Testing Fields',
     fields: [
-      { id: 'featureUnderTest', label: 'Feature Under Test',      type: 'text',  placeholder: 'e.g. User Authentication',           required: true  },
-      { id: 'relatedChangeRef', label: 'Related Change / PR Ref', type: 'text',  placeholder: 'e.g. PR-4521, JIRA-887',             required: false },
-      { id: 'baselineVersion',  label: 'Baseline Version',        type: 'text',  placeholder: 'e.g. v2.3.1',                        required: false },
-      { id: 'testSteps',        label: 'Regression Steps',        type: 'steps', placeholder: 'e.g. Log in with valid credentials', required: true  },
-      { id: 'expectedResult',   label: 'Expected Result',         type: 'text',  placeholder: 'e.g. No regression — login succeeds',required: true  },
+      { id: 'featureUnderTest', label: 'Feature Under Test', type: 'text', placeholder: 'e.g. User Authentication', required: true },
+      { id: 'relatedChangeRef', label: 'Related Change / PR Ref', type: 'text', placeholder: 'e.g. PR-4521, JIRA-887', required: false },
+      { id: 'baselineVersion', label: 'Baseline Version', type: 'text', placeholder: 'e.g. v2.3.1', required: false },
+      { id: 'testSteps', label: 'Regression Steps', type: 'steps', placeholder: 'e.g. Log in with valid credentials', required: true },
+      { id: 'expectedResult', label: 'Expected Result', type: 'text', placeholder: 'e.g. No regression — login succeeds', required: true },
     ]
   },
   smoke: {
     label: 'Smoke Testing Fields',
     fields: [
-      { id: 'buildVersion',      label: 'Build Version',              type: 'text',     placeholder: 'e.g. build-20260607-001',          required: true  },
-      { id: 'criticalPaths',     label: 'Critical Paths to Verify',   type: 'steps',    placeholder: 'e.g. App launches without crash',  required: true  },
-      { id: 'goNoGoThreshold',   label: 'Go / No-Go Threshold',       type: 'text',     placeholder: 'e.g. All critical paths pass',     required: true  },
-      { id: 'environmentHealth', label: 'Environment Health Check',   type: 'textarea', placeholder: 'e.g. DB connection OK',            required: false },
+      { id: 'buildVersion', label: 'Build Version', type: 'text', placeholder: 'e.g. build-20260607-001', required: true },
+      { id: 'criticalPaths', label: 'Critical Paths to Verify', type: 'steps', placeholder: 'e.g. App launches without crash', required: true },
+      { id: 'goNoGoThreshold', label: 'Go / No-Go Threshold', type: 'text', placeholder: 'e.g. All critical paths pass', required: true },
+      { id: 'environmentHealth', label: 'Environment Health Check', type: 'textarea', placeholder: 'e.g. DB connection OK', required: false },
     ]
   }
 };
@@ -151,11 +151,11 @@ const DYNAMIC_FIELD_CONFIGS = {
 // ═══════════════════════════════════════════════════════════
 
 const PWD_RULES = [
-  { id: 'rule-len',    test: v => v.length >= 8,              label: 'At least 8 characters'         },
-  { id: 'rule-lower',  test: v => /[a-z]/.test(v),            label: 'One lowercase letter'           },
-  { id: 'rule-upper',  test: v => /[a-zA-Z]/.test(v),         label: 'One uppercase or any letter'    },
-  { id: 'rule-num',    test: v => /[0-9]/.test(v),            label: 'One numeral (0–9)'              },
-  { id: 'rule-special',test: v => /[^a-zA-Z0-9]/.test(v),    label: 'One special character (!@#$…)' },
+  { id: 'rule-len', test: v => v.length >= 8, label: 'At least 8 characters' },
+  { id: 'rule-lower', test: v => /[a-z]/.test(v), label: 'One lowercase letter' },
+  { id: 'rule-upper', test: v => /[a-zA-Z]/.test(v), label: 'One uppercase or any letter' },
+  { id: 'rule-num', test: v => /[0-9]/.test(v), label: 'One numeral (0–9)' },
+  { id: 'rule-special', test: v => /[^a-zA-Z0-9]/.test(v), label: 'One special character (!@#$…)' },
 ];
 
 /** Returns { passed: bool, strength: 0-5, failedRules: [...] } */
@@ -200,15 +200,47 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
+// ═══════════════════════════════════════════════════════════
+// TEST CASE VALIDATION RULES
+// ═══════════════════════════════════════════════════════════
+
+function textRules(value, minLength = 10) {
+  const v = String(value || '').trim();
+
+  return {
+    valid: v.length >= minLength,
+    message: `Must contain at least ${minLength} characters.`
+  };
+}
+
+function numericRules(value) {
+  const v = String(value || '').trim();
+
+  return {
+    valid: /^[0-9]+(\.[0-9]+)?$/.test(v),
+    message: 'Only numeric values are allowed.'
+  };
+}
+
+// Performance fields requiring numeric validation
+const NUMERIC_FIELDS = [
+  'concurrentUsers',
+  'rampUpTime',
+  'duration',
+  'expectedResponseTime',
+  'throughput',
+  'errorThreshold'
+];
+
 function setInputState(inputEl, hintEl, state, message = '') {
   if (!inputEl) return;
   inputEl.classList.remove('input-error', 'input-success');
   if (hintEl) { hintEl.classList.remove('visible'); hintEl.textContent = message; }
-  if (state === 'error')   { inputEl.classList.add('input-error'); if (message && hintEl) hintEl.classList.add('visible'); }
+  if (state === 'error') { inputEl.classList.add('input-error'); if (message && hintEl) hintEl.classList.add('visible'); }
   if (state === 'success') { inputEl.classList.add('input-success'); }
 }
 
-function openModal(id)  { document.getElementById(id)?.classList.add('active'); }
+function openModal(id) { document.getElementById(id)?.classList.add('active'); }
 function closeModal(id) { document.getElementById(id)?.classList.remove('active'); }
 
 function setLoading(btn, isLoading, originalText = '') {
@@ -235,23 +267,23 @@ function nowISO() { return new Date().toISOString(); }
 function fmtDate(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
-  return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) +
-    ' ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
+    ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 }
 
 function fmtDateShort(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
-  return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 /** Wire nav bar user info (shared by create_test + read_test) */
 function wireNavBar(user) {
-  const initials = (user.name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  const initials = (user.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const el = id => document.getElementById(id);
   if (el('navAvatar')) el('navAvatar').textContent = initials;
-  if (el('navName'))   el('navName').textContent   = user.name || '—';
-  if (el('navRole'))   el('navRole').textContent   = user.position || '—';
+  if (el('navName')) el('navName').textContent = user.name || '—';
+  if (el('navRole')) el('navRole').textContent = user.position || '—';
   el('navLogout')?.addEventListener('click', () => {
     sessionStorage.removeItem('forge_user');
     window.location.href = 'index.html';
@@ -263,20 +295,20 @@ function wireNavBar(user) {
 // ═══════════════════════════════════════════════════════════
 
 function initLoginPage() {
-  const emailInput    = document.getElementById('email');
+  const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
-  const hintEmail     = document.getElementById('hint-email');
-  const hintPassword  = document.getElementById('hint-password');
-  const btnLogin      = document.getElementById('btnLogin');
-  const btnSignUp     = document.getElementById('btnSignUp');
+  const hintEmail = document.getElementById('hint-email');
+  const hintPassword = document.getElementById('hint-password');
+  const btnLogin = document.getElementById('btnLogin');
+  const btnSignUp = document.getElementById('btnSignUp');
 
   if (!emailInput) return;
 
   emailInput.addEventListener('blur', () => {
     const v = emailInput.value.trim();
-    if (!v)               setInputState(emailInput, hintEmail, 'error', 'Email cannot be empty.');
+    if (!v) setInputState(emailInput, hintEmail, 'error', 'Email cannot be empty.');
     else if (!isValidEmail(v)) setInputState(emailInput, hintEmail, 'error', 'Enter a valid email address.');
-    else                  setInputState(emailInput, hintEmail, 'success');
+    else setInputState(emailInput, hintEmail, 'success');
   });
   emailInput.addEventListener('input', () => {
     if (emailInput.classList.contains('input-error')) setInputState(emailInput, hintEmail, 'neutral');
@@ -293,17 +325,17 @@ function initLoginPage() {
   btnSignUp?.addEventListener('click', () => { window.location.href = 'register.html'; });
 
   btnLogin?.addEventListener('click', async () => {
-    const email    = emailInput.value.trim();
+    const email = emailInput.value.trim();
     const password = passwordInput.value;
-    let hasError   = false;
-    if (!email)               { setInputState(emailInput, hintEmail, 'error', 'Email cannot be empty.'); hasError = true; }
+    let hasError = false;
+    if (!email) { setInputState(emailInput, hintEmail, 'error', 'Email cannot be empty.'); hasError = true; }
     else if (!isValidEmail(email)) { setInputState(emailInput, hintEmail, 'error', 'Enter a valid email address.'); hasError = true; }
     if (!password) { setInputState(passwordInput, hintPassword, 'error', 'Password cannot be empty.'); hasError = true; }
     if (hasError) return;
 
     setLoading(btnLogin, true);
     try {
-      const res  = await fetch(`${API_BASE}/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
+      const res = await fetch(`${API_BASE}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
       const data = await res.json();
       if (data.success) {
         sessionStorage.setItem('forge_user', JSON.stringify(data.user));
@@ -331,12 +363,12 @@ function initLoginPage() {
 // ═══════════════════════════════════════════════════════════
 
 function buildPermissionBadge(position) {
-  const p  = PERMISSIONS[position];
+  const p = PERMISSIONS[position];
   const pd = PERMISSION_DESCRIPTIONS[position];
   const dd = DELETE_DESCRIPTIONS[position];
   if (!p) return '';
   const appIcon = p.approve === true ? '✅' : p.approve === 'review_only' ? '⚠️' : '❌';
-  const appCls  = p.approve === true ? 'pb-allowed' : p.approve === 'review_only' ? 'pb-partial' : 'pb-denied';
+  const appCls = p.approve === true ? 'pb-allowed' : p.approve === 'review_only' ? 'pb-partial' : 'pb-denied';
   return `<div class="permission-badge" id="permissionBadge">
     <span class="pb-title">${position} — Permissions</span>
     <div class="pb-row"><span class="pb-icon">✅</span><span class="pb-label">Create:</span><span class="pb-allowed">All Test Cases</span></div>
@@ -349,24 +381,24 @@ function buildPermissionBadge(position) {
 }
 
 function initRegisterPage() {
-  const nameInput     = document.getElementById('reg-name');
-  const positionSel   = document.getElementById('reg-position');
-  const empIdInput    = document.getElementById('reg-empid');
-  const emailInput    = document.getElementById('reg-email');
-  const pwdInput      = document.getElementById('reg-password');
-  const confirmInput  = document.getElementById('reg-confirm-password');
-  const btnRegister   = document.getElementById('btnRegister');
-  const togglePwd     = document.getElementById('togglePwd');
+  const nameInput = document.getElementById('reg-name');
+  const positionSel = document.getElementById('reg-position');
+  const empIdInput = document.getElementById('reg-empid');
+  const emailInput = document.getElementById('reg-email');
+  const pwdInput = document.getElementById('reg-password');
+  const confirmInput = document.getElementById('reg-confirm-password');
+  const btnRegister = document.getElementById('btnRegister');
+  const togglePwd = document.getElementById('togglePwd');
   const toggleConfirm = document.getElementById('toggleConfirmPwd');
 
   if (!nameInput) return;
 
   const hints = {
-    name:    document.getElementById('hint-reg-name'),
-    pos:     document.getElementById('hint-reg-position'),
-    empid:   document.getElementById('hint-reg-empid'),
-    email:   document.getElementById('hint-reg-email'),
-    pwd:     document.getElementById('hint-reg-password'),
+    name: document.getElementById('hint-reg-name'),
+    pos: document.getElementById('hint-reg-position'),
+    empid: document.getElementById('hint-reg-empid'),
+    email: document.getElementById('hint-reg-email'),
+    pwd: document.getElementById('hint-reg-password'),
     confirm: document.getElementById('hint-reg-confirm-password'),
   };
 
@@ -376,7 +408,7 @@ function initRegisterPage() {
     inputEl.type = show ? 'text' : 'password';
     eyeEl.textContent = show ? '🙈' : '👁';
   }
-  togglePwd?.addEventListener('click',     () => toggleVisibility(pwdInput,     document.getElementById('eyePwd')));
+  togglePwd?.addEventListener('click', () => toggleVisibility(pwdInput, document.getElementById('eyePwd')));
   toggleConfirm?.addEventListener('click', () => toggleVisibility(confirmInput, document.getElementById('eyeConfirm')));
 
   // ── Live password strength ────────────────────────────────
@@ -392,9 +424,9 @@ function initRegisterPage() {
 
   pwdInput.addEventListener('blur', () => {
     const { passed } = validatePassword(pwdInput.value);
-    if (!pwdInput.value)  setInputState(pwdInput, hints.pwd, 'error', 'Password cannot be empty.');
-    else if (!passed)     setInputState(pwdInput, hints.pwd, 'error', 'Password does not meet all requirements.');
-    else                  setInputState(pwdInput, hints.pwd, 'success');
+    if (!pwdInput.value) setInputState(pwdInput, hints.pwd, 'error', 'Password cannot be empty.');
+    else if (!passed) setInputState(pwdInput, hints.pwd, 'error', 'Password does not meet all requirements.');
+    else setInputState(pwdInput, hints.pwd, 'success');
   });
 
   // ── Confirm password ──────────────────────────────────────
@@ -448,9 +480,9 @@ function initRegisterPage() {
 
   emailInput.addEventListener('blur', () => {
     const v = emailInput.value.trim();
-    if (!v)               setInputState(emailInput, hints.email, 'error', 'Email cannot be empty.');
+    if (!v) setInputState(emailInput, hints.email, 'error', 'Email cannot be empty.');
     else if (!isValidEmail(v)) setInputState(emailInput, hints.email, 'error', 'Enter a valid email address.');
-    else                  setInputState(emailInput, hints.email, 'success');
+    else setInputState(emailInput, hints.email, 'success');
   });
   emailInput.addEventListener('input', () => { if (emailInput.classList.contains('input-error')) { emailInput.classList.remove('input-error'); hints.email.classList.remove('visible'); } });
 
@@ -458,18 +490,18 @@ function initRegisterPage() {
 
   // ── Register submit ───────────────────────────────────────
   btnRegister.addEventListener('click', async () => {
-    const name       = nameInput.value.trim();
-    const position   = positionSel.value;
+    const name = nameInput.value.trim();
+    const position = positionSel.value;
     const employeeId = empIdInput.value.trim();
-    const email      = emailInput.value.trim();
-    const password   = pwdInput.value;
-    const confirm    = confirmInput.value;
+    const email = emailInput.value.trim();
+    const password = pwdInput.value;
+    const confirm = confirmInput.value;
     let hasError = false;
 
-    if (!name)     { setInputState(nameInput,   hints.name,  'error', 'Name cannot be empty.');      hasError = true; }
-    if (!position) { setInputState(positionSel, hints.pos,   'error', 'Please select a position.');  hasError = true; }
-    if (!employeeId){ setInputState(empIdInput, hints.empid, 'error', 'Employee ID cannot be empty.'); hasError = true; }
-    if (!email)    { setInputState(emailInput,  hints.email, 'error', 'Email cannot be empty.');      hasError = true; }
+    if (!name) { setInputState(nameInput, hints.name, 'error', 'Name cannot be empty.'); hasError = true; }
+    if (!position) { setInputState(positionSel, hints.pos, 'error', 'Please select a position.'); hasError = true; }
+    if (!employeeId) { setInputState(empIdInput, hints.empid, 'error', 'Employee ID cannot be empty.'); hasError = true; }
+    if (!email) { setInputState(emailInput, hints.email, 'error', 'Email cannot be empty.'); hasError = true; }
     else if (!isValidEmail(email)) { setInputState(emailInput, hints.email, 'error', 'Enter a valid email address.'); hasError = true; }
 
     if (!password) {
@@ -489,14 +521,14 @@ function initRegisterPage() {
 
     setLoading(btnRegister, true);
     try {
-      const res  = await fetch(`${API_BASE}/register`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, position, employeeId, email, password }) });
+      const res = await fetch(`${API_BASE}/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, position, employeeId, email, password }) });
       const data = await res.json();
       setLoading(btnRegister, false, 'Register');
       if (data.success) {
         openModal('successModal');
       } else {
         if (data.message.includes('Employee ID')) setInputState(empIdInput, hints.empid, 'error', 'This Employee ID is already taken.');
-        else if (data.message.includes('Email'))  setInputState(emailInput, hints.email, 'error', 'This email is already registered.');
+        else if (data.message.includes('Email')) setInputState(emailInput, hints.email, 'error', 'This email is already registered.');
         showToast(`✗ ${data.message}`, 'error');
       }
     } catch {
@@ -528,9 +560,9 @@ function initCreateTestPage() {
   }
 
   const tcId = generateUUID();
-  const now  = nowISO();
-  document.getElementById('displayTcId').textContent   = tcId;
-  document.getElementById('metaTcId').textContent      = tcId;
+  const now = nowISO();
+  document.getElementById('displayTcId').textContent = tcId;
+  document.getElementById('metaTcId').textContent = tcId;
   document.getElementById('metaCreatedBy').textContent = user.employeeId || user.name;
   document.getElementById('metaTimestamp').textContent = fmtDate(now);
 
@@ -544,7 +576,7 @@ function initCreateTestPage() {
       });
     })
     .catch(() => {
-      [{ id:'PRJ-001', name:'Project Alpha' },{ id:'PRJ-002', name:'Project Beta' },{ id:'PRJ-003', name:'Project Gamma' }]
+      [{ id: 'PRJ-001', name: 'Project Alpha' }, { id: 'PRJ-002', name: 'Project Beta' }, { id: 'PRJ-003', name: 'Project Gamma' }]
         .forEach(p => { const o = document.createElement('option'); o.value = p.id; o.textContent = p.name; projectSelect.appendChild(o); });
     });
 
@@ -567,16 +599,16 @@ function initCreateTestPage() {
 
   // Tags
   const tagWrapper = document.getElementById('tagWrapper');
-  const tagInput   = document.getElementById('tagInput');
+  const tagInput = document.getElementById('tagInput');
   const tags = [];
   function addTag(raw) {
-    const v = raw.trim().replace(/,/g,'');
+    const v = raw.trim().replace(/,/g, '');
     if (!v || tags.includes(v)) return;
     tags.push(v);
     const chip = document.createElement('span');
     chip.className = 'tag-chip';
     chip.innerHTML = `${v}<button class="tag-chip-remove" title="Remove">×</button>`;
-    chip.querySelector('button').addEventListener('click', () => { tags.splice(tags.indexOf(v),1); chip.remove(); });
+    chip.querySelector('button').addEventListener('click', () => { tags.splice(tags.indexOf(v), 1); chip.remove(); });
     tagWrapper.insertBefore(chip, tagInput);
   }
   tagInput.addEventListener('keydown', e => {
@@ -588,11 +620,11 @@ function initCreateTestPage() {
   // Dynamic fields
   function renderDynamicFields(typeId) {
     const section = document.getElementById('dynamicSection');
-    const config  = DYNAMIC_FIELD_CONFIGS[typeId];
+    const config = DYNAMIC_FIELD_CONFIGS[typeId];
     if (!config) { section.innerHTML = ''; return; }
     let html = `<div class="dynamic-section"><div class="dynamic-section-title">⚗️ ${config.label}</div>`;
     config.fields.forEach(f => {
-      const req    = f.required ? `<span style="color:var(--error)"> *</span>` : '';
+      const req = f.required ? `<span style="color:var(--error)"> *</span>` : '';
       const hintId = `hint-dyn-${f.id}`;
       if (f.type === 'textarea') {
         html += `<div class="form-group" data-field="${f.id}"><label>${f.label}${req}</label><textarea id="dyn-${f.id}" class="forge-textarea" placeholder="${f.placeholder}" rows="3"></textarea><span class="field-hint" id="${hintId}">${f.label} is required.</span></div>`;
@@ -613,8 +645,8 @@ function initCreateTestPage() {
 
   function addStep(sid) {
     const list = document.getElementById(`steps-${sid}`);
-    const num  = list.children.length + 1;
-    const row  = document.createElement('div'); row.className = 'step-row';
+    const num = list.children.length + 1;
+    const row = document.createElement('div'); row.className = 'step-row';
     row.innerHTML = `<span class="step-number">${num}.</span><input type="text" class="step-input" placeholder="Step ${num}…" /><button class="step-remove" title="Remove">×</button>`;
     row.querySelector('.step-remove').addEventListener('click', () => removeStep(row));
     list.appendChild(row);
@@ -625,26 +657,66 @@ function initCreateTestPage() {
     const list = row.parentElement;
     if (list.children.length <= 1) return;
     row.remove();
-    list.querySelectorAll('.step-number').forEach((n,i) => { n.textContent = `${i+1}.`; });
+    list.querySelectorAll('.step-number').forEach((n, i) => { n.textContent = `${i + 1}.`; });
   }
 
   function collectDynamicData() {
-    if (!selectedType) return { data:{}, valid:true };
+    if (!selectedType) return { data: {}, valid: true };
     const config = DYNAMIC_FIELD_CONFIGS[selectedType];
     const dynData = {}; let valid = true;
     config.fields.forEach(f => {
       const hintEl = document.getElementById(`hint-dyn-${f.id}`);
       if (f.type === 'steps') {
-        const steps = Array.from(document.querySelectorAll(`#steps-${f.id} .step-input`)).map(i => i.value.trim()).filter(Boolean);
+        const steps = Array.from(
+          document.querySelectorAll(`#steps-${f.id} .step-input`)
+        )
+          .map(i => i.value.trim())
+          .filter(Boolean);
+
         dynData[f.id] = steps;
-        if (f.required && !steps.length) { if (hintEl) { hintEl.style.display='block'; hintEl.classList.add('visible'); } valid = false; }
-        else { if (hintEl) hintEl.classList.remove('visible'); }
-      } else {
-        const el  = document.getElementById(`dyn-${f.id}`);
+
+        if (f.required && !steps.length) {
+          valid = false;
+        }
+
+        // Each step must be >= 10 chars
+        if (steps.some(step => !textRules(step).valid)) {
+          if (hintEl) {
+            hintEl.textContent = 'Each step must contain at least 10 characters.';
+            hintEl.classList.add('visible');
+          }
+          valid = false;
+        }
+      }
+      else {
+        const el = document.getElementById(`dyn-${f.id}`);
         const val = el ? el.value.trim() : '';
+
         dynData[f.id] = val;
-        if (f.required && !val) { if (el) el.classList.add('input-error'); if (hintEl) { hintEl.style.display='block'; hintEl.classList.add('visible'); } valid = false; }
-        else { if (el) el.classList.remove('input-error'); if (hintEl) hintEl.classList.remove('visible'); }
+
+        if (val) {
+
+          if (NUMERIC_FIELDS.includes(f.id)) {
+            if (!numericRules(val).valid) {
+              el.classList.add('input-error');
+              if (hintEl) {
+                hintEl.textContent = numericRules(val).message;
+                hintEl.classList.add('visible');
+              }
+              valid = false;
+            }
+          }
+          else {
+            if (!textRules(val).valid) {
+              el.classList.add('input-error');
+              if (hintEl) {
+                hintEl.textContent = textRules(val).message;
+                hintEl.classList.add('visible');
+              }
+              valid = false;
+            }
+          }
+        }
       }
     });
     return { data: dynData, valid };
@@ -653,11 +725,11 @@ function initCreateTestPage() {
   function validateCommonFields() {
     let valid = true;
     const fields = [
-      { el: document.getElementById('tc-name'),     hint: document.getElementById('hint-tc-name'),     msg: 'Test Case Name is required.'    },
-      { el: document.getElementById('tc-desc'),     hint: document.getElementById('hint-tc-desc'),     msg: 'Description is required.'       },
-      { el: document.getElementById('tc-project'),  hint: document.getElementById('hint-tc-project'),  msg: 'Please select a project.'       },
-      { el: document.getElementById('tc-priority'), hint: document.getElementById('hint-tc-priority'), msg: 'Please select a priority.'      },
-      { el: document.getElementById('tc-env'),      hint: document.getElementById('hint-tc-env'),      msg: 'Please select an environment.'  },
+      { el: document.getElementById('tc-name'), hint: document.getElementById('hint-tc-name'), msg: 'Test Case Name is required.' },
+      { el: document.getElementById('tc-desc'), hint: document.getElementById('hint-tc-desc'), msg: 'Description is required.' },
+      { el: document.getElementById('tc-project'), hint: document.getElementById('hint-tc-project'), msg: 'Please select a project.' },
+      { el: document.getElementById('tc-priority'), hint: document.getElementById('hint-tc-priority'), msg: 'Please select a priority.' },
+      { el: document.getElementById('tc-env'), hint: document.getElementById('hint-tc-env'), msg: 'Please select an environment.' },
     ];
     fields.forEach(({ el, hint, msg }) => {
       if (!el.value.trim()) { setInputState(el, hint, 'error', msg); valid = false; }
@@ -666,17 +738,40 @@ function initCreateTestPage() {
     const typeHint = document.getElementById('hint-tc-type');
     if (!selectedType) { typeHint.textContent = 'Please select a testing type.'; typeHint.style.display = 'block'; typeHint.classList.add('visible'); valid = false; }
     else { typeHint.classList.remove('visible'); typeHint.style.display = 'none'; }
+    const name = document.getElementById('tc-name').value.trim();
+    const desc = document.getElementById('tc-desc').value.trim();
+
+    if (!textRules(name).valid) {
+      setInputState(
+        document.getElementById('tc-name'),
+        document.getElementById('hint-tc-name'),
+        'error',
+        'Test Case Name must contain at least 10 characters.'
+      );
+      valid = false;
+    }
+
+    if (!textRules(desc).valid) {
+      setInputState(
+        document.getElementById('tc-desc'),
+        document.getElementById('hint-tc-desc'),
+        'error',
+        'Description must contain at least 10 characters.'
+      );
+      valid = false;
+    }
+
     return valid;
   }
 
   function resetForm() {
-    ['tc-name','tc-desc','tc-project','tc-priority','tc-env'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    ['tc-name', 'tc-desc', 'tc-project', 'tc-priority', 'tc-env'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     tagInput.value = ''; tags.splice(0);
     document.getElementById('tagWrapper').querySelectorAll('.tag-chip').forEach(c => c.remove());
     typeGrid.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
     selectedType = null;
     document.getElementById('dynamicSection').innerHTML = '';
-    document.querySelectorAll('.input-error, .input-success').forEach(el => el.classList.remove('input-error','input-success'));
+    document.querySelectorAll('.input-error, .input-success').forEach(el => el.classList.remove('input-error', 'input-success'));
     document.querySelectorAll('.field-hint.visible').forEach(h => h.classList.remove('visible'));
   }
 
@@ -688,34 +783,34 @@ function initCreateTestPage() {
     if (!commonOk || !dynResult.valid) { showToast('⚠ Please fix the highlighted fields.', 'error'); return; }
     const tsNow = nowISO();
     const payload = {
-      testCaseId:       tcId,
-      testCaseName:     document.getElementById('tc-name').value.trim(),
-      description:      document.getElementById('tc-desc').value.trim(),
-      projectId:        document.getElementById('tc-project').value,
-      testingType:      TESTING_TYPES.find(t => t.id === selectedType)?.label || selectedType,
-      testingTypeId:    selectedType,
-      priority:         document.getElementById('tc-priority').value,
-      environment:      document.getElementById('tc-env').value,
-      tags:             [...tags],
-      status:           'Draft',
-      isApproved:       false,
-      approvedBy:       null,
-      approvedAt:       null,
-      version:          1,
-      createdBy:        user.employeeId || user.email,
-      createdByName:    user.name,
+      testCaseId: tcId,
+      testCaseName: document.getElementById('tc-name').value.trim(),
+      description: document.getElementById('tc-desc').value.trim(),
+      projectId: document.getElementById('tc-project').value,
+      testingType: TESTING_TYPES.find(t => t.id === selectedType)?.label || selectedType,
+      testingTypeId: selectedType,
+      priority: document.getElementById('tc-priority').value,
+      environment: document.getElementById('tc-env').value,
+      tags: [...tags],
+      status: 'Draft',
+      isApproved: false,
+      approvedBy: null,
+      approvedAt: null,
+      version: 1,
+      createdBy: user.employeeId || user.email,
+      createdByName: user.name,
       createdTimestamp: tsNow,
       updatedTimestamp: tsNow,
-      dynamicData:      dynResult.data || {}
+      dynamicData: dynResult.data || {}
     };
     const btn = document.getElementById('btnSubmit');
     setLoading(btn, true);
     try {
-      const res  = await fetch(`${API_BASE}/test-cases`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ payload, userPosition: user.position, employeeId: user.employeeId }) });
+      const res = await fetch(`${API_BASE}/test-cases`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ payload, userPosition: user.position, employeeId: user.employeeId }) });
       const data = await res.json();
       setLoading(btn, false, '＋ Create Test Case');
       if (data.success) {
-        document.getElementById('formCard').style.display   = 'none';
+        document.getElementById('formCard').style.display = 'none';
         document.getElementById('successCard').style.display = 'block';
         document.getElementById('spTcId').textContent = tcId;
         showToast('✅ Test case saved!', 'success');
@@ -742,17 +837,17 @@ function initReadTestPage() {
   if (!user.name) { window.location.href = 'index.html'; return; }
   wireNavBar(user);
 
-  const perms  = PERMISSIONS[user.position] || PERMISSIONS['Employee'];
-  const scope  = perms.read;
+  const perms = PERMISSIONS[user.position] || PERMISSIONS['Employee'];
+  const scope = perms.read;
 
   // Show scope banner
   const scopeConfig = {
-    own:          { cls: 'scope-own',     icon: '👤', text: `Showing <strong>your own</strong> test cases only.` },
-    team:         { cls: 'scope-team',    icon: '👥', text: `Showing test cases from <strong>your team</strong>.` },
-    project:      { cls: 'scope-project', icon: '📁', text: `Showing all test cases across <strong>your projects</strong>.` },
-    department:   { cls: 'scope-dept',    icon: '🏢', text: `Showing test cases across your <strong>department</strong>.` },
-    multi_project:{ cls: 'scope-dept',    icon: '📂', text: `Showing test cases across <strong>multiple projects</strong>.` },
-    organization: { cls: 'scope-org',     icon: '🌐', text: `Showing <strong>all test cases</strong> in the organization.` },
+    own: { cls: 'scope-own', icon: '👤', text: `Showing <strong>your own</strong> test cases only.` },
+    team: { cls: 'scope-team', icon: '👥', text: `Showing test cases from <strong>your team</strong>.` },
+    project: { cls: 'scope-project', icon: '📁', text: `Showing all test cases across <strong>your projects</strong>.` },
+    department: { cls: 'scope-dept', icon: '🏢', text: `Showing test cases across your <strong>department</strong>.` },
+    multi_project: { cls: 'scope-dept', icon: '📂', text: `Showing test cases across <strong>multiple projects</strong>.` },
+    organization: { cls: 'scope-org', icon: '🌐', text: `Showing <strong>all test cases</strong> in the organization.` },
   };
   const sc = scopeConfig[scope] || scopeConfig.own;
   const banner = document.getElementById('scopeBanner');
@@ -762,11 +857,11 @@ function initReadTestPage() {
   }
 
   // State
-  let allTestCases   = [];
-  let filteredCases  = [];
-  let sortField      = 'createdTimestamp';
-  let sortDir        = 'desc';
-  let projectsMap    = {};
+  let allTestCases = [];
+  let filteredCases = [];
+  let sortField = 'createdTimestamp';
+  let sortDir = 'desc';
+  let projectsMap = {};
 
   // Fetch projects for filter dropdown + name mapping
   fetch(`${API_BASE}/projects`)
@@ -780,14 +875,14 @@ function initReadTestPage() {
           sel?.appendChild(o);
         });
       }
-    }).catch(() => {});
+    }).catch(() => { });
 
   // Fetch and filter test cases
   async function loadTestCases() {
     showSkeletons();
     try {
       const params = new URLSearchParams({ userPosition: user.position, employeeId: user.employeeId });
-      const res  = await fetch(`${API_BASE}/test-cases?${params}`);
+      const res = await fetch(`${API_BASE}/test-cases?${params}`);
       const data = await res.json();
       if (data.success) {
         allTestCases = data.testCases;
@@ -802,31 +897,31 @@ function initReadTestPage() {
 
   // Filter + sort logic
   function applyFiltersAndRender() {
-    const search   = document.getElementById('filterSearch')?.value.trim().toLowerCase()  || '';
-    const project  = document.getElementById('filterProject')?.value  || '';
-    const type     = document.getElementById('filterType')?.value     || '';
+    const search = document.getElementById('filterSearch')?.value.trim().toLowerCase() || '';
+    const project = document.getElementById('filterProject')?.value || '';
+    const type = document.getElementById('filterType')?.value || '';
     const priority = document.getElementById('filterPriority')?.value || '';
-    const env      = document.getElementById('filterEnv')?.value      || '';
-    const status   = document.getElementById('filterStatus')?.value   || '';
+    const env = document.getElementById('filterEnv')?.value || '';
+    const status = document.getElementById('filterStatus')?.value || '';
     const dateFrom = document.getElementById('filterDateFrom')?.value || '';
-    const dateTo   = document.getElementById('filterDateTo')?.value   || '';
+    const dateTo = document.getElementById('filterDateTo')?.value || '';
 
     filteredCases = allTestCases.filter(tc => {
       if (search) {
         const hay = [tc.testCaseId, tc.testCaseName, tc.description, tc.createdByName, tc.createdBy].join(' ').toLowerCase();
         if (!hay.includes(search)) return false;
       }
-      if (project  && tc.projectId   !== project)  return false;
-      if (type     && tc.testingTypeId !== type && tc.testingType !== type) return false;
-      if (priority && tc.priority    !== priority) return false;
-      if (env      && tc.environment !== env)      return false;
+      if (project && tc.projectId !== project) return false;
+      if (type && tc.testingTypeId !== type && tc.testingType !== type) return false;
+      if (priority && tc.priority !== priority) return false;
+      if (env && tc.environment !== env) return false;
       if (status) {
-        if (status === 'Approved' && !tc.isApproved)  return false;
-        if (status === 'Draft'    && tc.status !== 'Draft') return false;
-        if (status === 'Pending'  && !(tc.status === 'Pending Review')) return false;
+        if (status === 'Approved' && !tc.isApproved) return false;
+        if (status === 'Draft' && tc.status !== 'Draft') return false;
+        if (status === 'Pending' && !(tc.status === 'Pending Review')) return false;
       }
       if (dateFrom) { const d = new Date(tc.createdTimestamp); if (d < new Date(dateFrom)) return false; }
-      if (dateTo)   { const d = new Date(tc.createdTimestamp); const to = new Date(dateTo); to.setHours(23,59,59); if (d > to) return false; }
+      if (dateTo) { const d = new Date(tc.createdTimestamp); const to = new Date(dateTo); to.setHours(23, 59, 59); if (d > to) return false; }
       return true;
     });
 
@@ -854,7 +949,7 @@ function initReadTestPage() {
   // Skeletons while loading
   function showSkeletons() {
     const list = document.getElementById('tcCardList');
-    list.innerHTML = [1,2,3].map(() => `
+    list.innerHTML = [1, 2, 3].map(() => `
       <div class="skeleton-card">
         <div class="skeleton-box" style="width:38px;height:38px;border-radius:9px;flex-shrink:0;"></div>
         <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
@@ -883,8 +978,8 @@ function initReadTestPage() {
           <div class="empty-state-title">No Test Cases Found</div>
           <div class="empty-state-sub">
             ${allTestCases.length === 0
-              ? 'No test cases have been created yet.<br/>Go to <a href="create_test.html" style="color:var(--purple-accent)">Create Test Case</a> to add one.'
-              : 'No test cases match the current filters.<br/>Try adjusting or clearing your search criteria.'}
+          ? 'No test cases have been created yet.<br/>Go to <a href="create_test.html" style="color:var(--purple-accent)">Create Test Case</a> to add one.'
+          : 'No test cases match the current filters.<br/>Try adjusting or clearing your search criteria.'}
           </div>
           ${allTestCases.length > 0 ? `<button class="btn btn-secondary btn-sm" id="btnClearFiltersEmpty">Clear All Filters</button>` : ''}
         </div>`;
@@ -897,7 +992,7 @@ function initReadTestPage() {
     list.querySelectorAll('.tc-card-head').forEach(head => {
       head.addEventListener('click', () => {
         const card = head.closest('.tc-card');
-        const btn  = head.querySelector('.tc-expand-btn');
+        const btn = head.querySelector('.tc-expand-btn');
         card.classList.toggle('expanded');
         btn.classList.toggle('open');
       });
@@ -906,12 +1001,12 @@ function initReadTestPage() {
 
   // Build a single test case card HTML
   function buildTcCard(tc) {
-    const icon         = typeIcon(tc.testingTypeId || tc.testingType);
-    const priorityCls  = `tc-pill-${(tc.priority || 'low').toLowerCase()}`;
-    const statusCls    = tc.isApproved ? 'tc-pill-approved' : (tc.status === 'Draft' ? 'tc-pill-draft' : 'tc-pill-pending');
-    const statusLabel  = tc.isApproved ? '✓ Approved' : tc.status || 'Draft';
-    const projName     = projectsMap[tc.projectId] || tc.projectId || '—';
-    const tagsHtml     = (tc.tags || []).length
+    const icon = typeIcon(tc.testingTypeId || tc.testingType);
+    const priorityCls = `tc-pill-${(tc.priority || 'low').toLowerCase()}`;
+    const statusCls = tc.isApproved ? 'tc-pill-approved' : (tc.status === 'Draft' ? 'tc-pill-draft' : 'tc-pill-pending');
+    const statusLabel = tc.isApproved ? '✓ Approved' : tc.status || 'Draft';
+    const projName = projectsMap[tc.projectId] || tc.projectId || '—';
+    const tagsHtml = (tc.tags || []).length
       ? `<div class="tc-tags">${tc.tags.map(t => `<span class="tc-tag">${t}</span>`).join('')}</div>` : '—';
 
     // Build dynamic data section
@@ -928,7 +1023,7 @@ function initReadTestPage() {
         if (f.type === 'steps' && Array.isArray(val)) {
           dynHtml += `<div class="tc-detail-field" style="grid-column:1/-1;">
             <div class="tc-detail-label">${f.label}</div>
-            <ol class="tc-steps-list">${val.map((s,i) => `<li><span class="step-n">${i+1}.</span>${s}</li>`).join('')}</ol>
+            <ol class="tc-steps-list">${val.map((s, i) => `<li><span class="step-n">${i + 1}.</span>${s}</li>`).join('')}</ol>
           </div>`;
         } else if (f.type === 'textarea') {
           dynHtml += `<div class="tc-detail-field" style="grid-column:1/-1;">
@@ -1030,14 +1125,14 @@ function initReadTestPage() {
 
   function escHtml(s) {
     return String(s)
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;');
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   // ── Wire filter controls ──────────────────────────────────
-  ['filterSearch','filterProject','filterType','filterPriority','filterEnv','filterStatus','filterDateFrom','filterDateTo']
+  ['filterSearch', 'filterProject', 'filterType', 'filterPriority', 'filterEnv', 'filterStatus', 'filterDateFrom', 'filterDateTo']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('input', applyFiltersAndRender);
@@ -1045,7 +1140,7 @@ function initReadTestPage() {
     });
 
   function clearFilters() {
-    ['filterSearch','filterProject','filterType','filterPriority','filterEnv','filterStatus','filterDateFrom','filterDateTo']
+    ['filterSearch', 'filterProject', 'filterType', 'filterPriority', 'filterEnv', 'filterStatus', 'filterDateFrom', 'filterDateTo']
       .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     applyFiltersAndRender();
   }
@@ -1082,8 +1177,8 @@ function initReadTestPage() {
  */
 function escHtml(s) {
   return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 /**
@@ -1093,26 +1188,26 @@ function escHtml(s) {
  * Returns sorted, filtered subset.
  */
 function applyFilters(allCases, projectsMap) {
-  const search   = document.getElementById('filterSearch')?.value.trim().toLowerCase()  || '';
-  const project  = document.getElementById('filterProject')?.value  || '';
-  const type     = document.getElementById('filterType')?.value     || '';
+  const search = document.getElementById('filterSearch')?.value.trim().toLowerCase() || '';
+  const project = document.getElementById('filterProject')?.value || '';
+  const type = document.getElementById('filterType')?.value || '';
   const priority = document.getElementById('filterPriority')?.value || '';
-  const env      = document.getElementById('filterEnv')?.value      || '';
-  const status   = document.getElementById('filterStatus')?.value   || '';
+  const env = document.getElementById('filterEnv')?.value || '';
+  const status = document.getElementById('filterStatus')?.value || '';
 
   return allCases.filter(tc => {
     if (search) {
       const hay = [tc.testCaseId, tc.testCaseName, tc.description, tc.createdByName, tc.createdBy].join(' ').toLowerCase();
       if (!hay.includes(search)) return false;
     }
-    if (project  && tc.projectId     !== project)  return false;
-    if (type     && tc.testingTypeId !== type && tc.testingType !== type) return false;
-    if (priority && tc.priority      !== priority) return false;
-    if (env      && tc.environment   !== env)      return false;
+    if (project && tc.projectId !== project) return false;
+    if (type && tc.testingTypeId !== type && tc.testingType !== type) return false;
+    if (priority && tc.priority !== priority) return false;
+    if (env && tc.environment !== env) return false;
     if (status) {
-      if (status === 'Approved' && !tc.isApproved)              return false;
-      if (status === 'Draft'    && tc.status !== 'Draft')        return false;
-      if (status === 'Pending'  && tc.status !== 'Pending Review') return false;
+      if (status === 'Approved' && !tc.isApproved) return false;
+      if (status === 'Draft' && tc.status !== 'Draft') return false;
+      if (status === 'Pending' && tc.status !== 'Pending Review') return false;
     }
     return true;
   });
@@ -1149,14 +1244,14 @@ function sortCases(cases, sortField, sortDir) {
 
 /** Wire filter inputs to a callback. */
 function wireFilterInputs(onChange) {
-  ['filterSearch','filterProject','filterType','filterPriority','filterEnv','filterStatus']
+  ['filterSearch', 'filterProject', 'filterType', 'filterPriority', 'filterEnv', 'filterStatus']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) { el.addEventListener('input', onChange); el.addEventListener('change', onChange); }
     });
   document.getElementById('btnApplyFilters')?.addEventListener('click', onChange);
   document.getElementById('btnClearFilters')?.addEventListener('click', () => {
-    ['filterSearch','filterProject','filterType','filterPriority','filterEnv','filterStatus']
+    ['filterSearch', 'filterProject', 'filterType', 'filterPriority', 'filterEnv', 'filterStatus']
       .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     onChange();
   });
@@ -1174,7 +1269,7 @@ async function loadProjectsIntoSelect(selectId) {
         if (sel) { const o = document.createElement('option'); o.value = p.id; o.textContent = p.name; sel.appendChild(o); }
       });
     }
-  } catch {}
+  } catch { }
   return map;
 }
 
@@ -1195,13 +1290,13 @@ function showSkeletons(listId, count = 3) {
 /** Build the scope banner */
 function renderScopeBanner(bannerId, user, scopeKey) {
   const scopeConfig = {
-    own_drafts:   { cls:'scope-own',     icon:'👤', label:'Own Drafts Only'     },
-    own:          { cls:'scope-own',     icon:'👤', label:'Own Test Cases'       },
-    team:         { cls:'scope-team',    icon:'👥', label:'Team Test Cases'      },
-    project:      { cls:'scope-project', icon:'📁', label:'Project Scope'        },
-    department:   { cls:'scope-dept',    icon:'🏢', label:'Department Scope'     },
-    multi_project:{ cls:'scope-dept',    icon:'📂', label:'Multiple Projects'    },
-    organization: { cls:'scope-org',     icon:'🌐', label:'Organization-wide'    },
+    own_drafts: { cls: 'scope-own', icon: '👤', label: 'Own Drafts Only' },
+    own: { cls: 'scope-own', icon: '👤', label: 'Own Test Cases' },
+    team: { cls: 'scope-team', icon: '👥', label: 'Team Test Cases' },
+    project: { cls: 'scope-project', icon: '📁', label: 'Project Scope' },
+    department: { cls: 'scope-dept', icon: '🏢', label: 'Department Scope' },
+    multi_project: { cls: 'scope-dept', icon: '📂', label: 'Multiple Projects' },
+    organization: { cls: 'scope-org', icon: '🌐', label: 'Organization-wide' },
   };
   const sc = scopeConfig[scopeKey] || scopeConfig.own;
   const banner = document.getElementById(bannerId);
@@ -1223,16 +1318,16 @@ function initUpdateTestPage() {
   if (!user.name) { window.location.href = 'index.html'; return; }
   wireNavBar(user);
 
-  const perms     = PERMISSIONS[user.position] || PERMISSIONS['Employee'];
-  const scope     = perms.update;
+  const perms = PERMISSIONS[user.position] || PERMISSIONS['Employee'];
+  const scope = perms.update;
   renderScopeBanner('scopeBanner', user, scope);
 
-  let allTestCases  = [];
-  let projectsMap   = {};
-  let sortField     = 'createdTimestamp';
-  let sortDir       = 'desc';
-  let activeEditId  = null;   // which card is currently open in edit mode
-  let hasUnsaved    = false;  // dirty flag
+  let allTestCases = [];
+  let projectsMap = {};
+  let sortField = 'createdTimestamp';
+  let sortDir = 'desc';
+  let activeEditId = null;   // which card is currently open in edit mode
+  let hasUnsaved = false;  // dirty flag
   let pendingOpenId = null;   // card waiting to open after discard confirm
 
   // Load projects
@@ -1243,8 +1338,8 @@ function initUpdateTestPage() {
     showSkeletons('tcCardList');
     try {
       const params = new URLSearchParams({ userPosition: user.position, employeeId: user.employeeId });
-      const res    = await fetch(`${API_BASE}/test-cases?${params}`);
-      const data   = await res.json();
+      const res = await fetch(`${API_BASE}/test-cases?${params}`);
+      const data = await res.json();
       if (data.success) { allTestCases = data.testCases; render(); }
       else showListError(data.message);
     } catch { showListError('Could not connect to server. Make sure it is running on port 3000.'); }
@@ -1260,8 +1355,8 @@ function initUpdateTestPage() {
   // ── Render all cards ──────────────────────────────────────
   function render() {
     const filtered = sortCases(applyFilters(allTestCases, projectsMap), sortField, sortDir);
-    const list     = document.getElementById('tcCardList');
-    const countEl  = document.getElementById('resultsCount');
+    const list = document.getElementById('tcCardList');
+    const countEl = document.getElementById('resultsCount');
     if (countEl) countEl.innerHTML = `Showing <strong>${filtered.length}</strong> of <strong>${allTestCases.length}</strong> test cases`;
 
     if (!filtered.length) {
@@ -1297,7 +1392,7 @@ function initUpdateTestPage() {
   function canEditThisTc(tc) {
     if (scope === 'own_drafts') return tc.createdBy === user.employeeId && tc.status === 'Draft' && !tc.isApproved;
     if (scope === 'team') {
-      const lowerTiers = Object.entries(PERMISSIONS).filter(([,p]) => p.tier <= perms.tier).map(([pos]) => pos);
+      const lowerTiers = Object.entries(PERMISSIONS).filter(([, p]) => p.tier <= perms.tier).map(([pos]) => pos);
       return (lowerTiers.includes(tc.creatorPosition) || tc.createdBy === user.employeeId) && !tc.isApproved;
     }
     if (scope === 'organization') return true; // Director
@@ -1315,18 +1410,18 @@ function initUpdateTestPage() {
 
   // ── Build a single update card ────────────────────────────
   function buildUpdateCard(tc) {
-    const icon        = typeIcon(tc.testingTypeId || tc.testingType);
-    const priCls      = `tc-pill-${(tc.priority||'low').toLowerCase()}`;
-    const statusCls   = tc.isApproved ? 'tc-pill-approved' : (tc.status==='Draft' ? 'tc-pill-draft' : 'tc-pill-pending');
+    const icon = typeIcon(tc.testingTypeId || tc.testingType);
+    const priCls = `tc-pill-${(tc.priority || 'low').toLowerCase()}`;
+    const statusCls = tc.isApproved ? 'tc-pill-approved' : (tc.status === 'Draft' ? 'tc-pill-draft' : 'tc-pill-pending');
     const statusLabel = tc.isApproved ? '✓ Approved' : (tc.status || 'Draft');
-    const projName    = projectsMap[tc.projectId] || tc.projectId || '—';
-    const canEdit     = canEditThisTc(tc);
-    const blocked     = editBlockedReason(tc);
-    const isOpen      = activeEditId === tc.testCaseId;
+    const projName = projectsMap[tc.projectId] || tc.projectId || '—';
+    const canEdit = canEditThisTc(tc);
+    const blocked = editBlockedReason(tc);
+    const isOpen = activeEditId === tc.testCaseId;
 
     // Build project options
     const projOpts = Object.entries(projectsMap)
-      .map(([id, name]) => `<option value="${id}" ${tc.projectId===id?'selected':''}>${name}</option>`).join('');
+      .map(([id, name]) => `<option value="${id}" ${tc.projectId === id ? 'selected' : ''}>${name}</option>`).join('');
 
     // Build dynamic fields pre-filled
     const dynConfig = DYNAMIC_FIELD_CONFIGS[tc.testingTypeId];
@@ -1342,7 +1437,7 @@ function initUpdateTestPage() {
             <textarea id="upd-dyn-${tc.testCaseId}-${f.id}" class="forge-textarea" rows="3"
               data-original="${escHtml(String(val))}">${escHtml(String(val))}</textarea></div>`;
         } else if (f.type === 'select') {
-          const opts = f.options.map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('');
+          const opts = f.options.map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`).join('');
           dynHtml += `<div class="form-group"><label>${f.label}${req}</label>
             <div class="select-wrapper">
               <select id="upd-dyn-${tc.testCaseId}-${f.id}" class="forge-select" data-original="${escHtml(val)}">
@@ -1351,9 +1446,9 @@ function initUpdateTestPage() {
         } else if (f.type === 'steps') {
           const steps = Array.isArray(val) ? val : [];
           const stepsHtml = steps.length
-            ? steps.map((s,i) => `<div class="step-row">
-                <span class="step-number">${i+1}.</span>
-                <input type="text" class="step-input" value="${escHtml(s)}" placeholder="Step ${i+1}…" />
+            ? steps.map((s, i) => `<div class="step-row">
+                <span class="step-number">${i + 1}.</span>
+                <input type="text" class="step-input" value="${escHtml(s)}" placeholder="Step ${i + 1}…" />
                 <button class="step-remove" title="Remove">×</button></div>`).join('')
             : `<div class="step-row"><span class="step-number">1.</span>
                <input type="text" class="step-input" placeholder="${f.placeholder}" />
@@ -1382,7 +1477,7 @@ function initUpdateTestPage() {
           <span class="vs-val">v${tc.version || 1}</span>
           <span class="vs-sep">→</span>
           <span class="vs-label">Will save as</span>
-          <span class="vs-val">v${(tc.version||1)+1}</span>
+          <span class="vs-val">v${(tc.version || 1) + 1}</span>
           <span class="vs-date">Last updated: ${fmtDate(tc.updatedTimestamp)}</span>
         </div>
 
@@ -1418,10 +1513,10 @@ function initUpdateTestPage() {
             <div class="select-wrapper">
               <select id="upd-priority-${tc.testCaseId}" class="forge-select" data-original="${tc.priority}">
                 <option value="">— Select —</option>
-                <option value="Critical" ${tc.priority==='Critical'?'selected':''}>🔴 Critical</option>
-                <option value="High"     ${tc.priority==='High'    ?'selected':''}>🟠 High</option>
-                <option value="Medium"   ${tc.priority==='Medium'  ?'selected':''}>🟡 Medium</option>
-                <option value="Low"      ${tc.priority==='Low'     ?'selected':''}>🟢 Low</option>
+                <option value="Critical" ${tc.priority === 'Critical' ? 'selected' : ''}>🔴 Critical</option>
+                <option value="High"     ${tc.priority === 'High' ? 'selected' : ''}>🟠 High</option>
+                <option value="Medium"   ${tc.priority === 'Medium' ? 'selected' : ''}>🟡 Medium</option>
+                <option value="Low"      ${tc.priority === 'Low' ? 'selected' : ''}>🟢 Low</option>
               </select><span class="select-arrow">▾</span></div>
           </div>
         </div>
@@ -1430,16 +1525,16 @@ function initUpdateTestPage() {
           <div class="select-wrapper">
             <select id="upd-env-${tc.testCaseId}" class="forge-select" data-original="${tc.environment}">
               <option value="">— Select —</option>
-              <option value="Dev"       ${tc.environment==='Dev'      ?'selected':''}>🛠️ Dev</option>
-              <option value="QA"        ${tc.environment==='QA'       ?'selected':''}>🧪 QA</option>
-              <option value="UAT"       ${tc.environment==='UAT'      ?'selected':''}>🔍 UAT</option>
-              <option value="Prod-like" ${tc.environment==='Prod-like'?'selected':''}>🚀 Prod-like</option>
+              <option value="Dev"       ${tc.environment === 'Dev' ? 'selected' : ''}>🛠️ Dev</option>
+              <option value="QA"        ${tc.environment === 'QA' ? 'selected' : ''}>🧪 QA</option>
+              <option value="UAT"       ${tc.environment === 'UAT' ? 'selected' : ''}>🔍 UAT</option>
+              <option value="Prod-like" ${tc.environment === 'Prod-like' ? 'selected' : ''}>🚀 Prod-like</option>
             </select><span class="select-arrow">▾</span></div>
         </div>
         <div class="form-group">
           <label>Tags</label>
           <div class="tag-input-wrapper" id="upd-tagwrap-${tc.testCaseId}">
-            ${(tc.tags||[]).map(t=>`<span class="tag-chip">${escHtml(t)}<button class="tag-chip-remove" title="Remove">×</button></span>`).join('')}
+            ${(tc.tags || []).map(t => `<span class="tag-chip">${escHtml(t)}<button class="tag-chip-remove" title="Remove">×</button></span>`).join('')}
             <input type="text" class="tag-text-input upd-tag-input" data-tcid="${tc.testCaseId}" placeholder="Add tag + Enter…" />
           </div>
           <div class="tag-hint">Press Enter or comma to add · Click × to remove</div>
@@ -1475,18 +1570,18 @@ function initUpdateTestPage() {
           <div class="tc-card-meta">
             <span class="tc-pill tc-pill-id">${tc.testCaseId}</span>
             <span class="tc-pill ${statusCls}">${statusLabel}</span>
-            <span class="tc-pill ${priCls}">${tc.priority||'—'}</span>
-            <span class="tc-pill tc-pill-env">${tc.environment||'—'}</span>
-            <span class="tc-pill tc-pill-type">${tc.testingType||'—'}</span>
+            <span class="tc-pill ${priCls}">${tc.priority || '—'}</span>
+            <span class="tc-pill tc-pill-env">${tc.environment || '—'}</span>
+            <span class="tc-pill tc-pill-type">${tc.testingType || '—'}</span>
             ${!canEdit ? `<span class="tc-pill" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;">🔒 Locked</span>` : ''}
           </div>
         </div>
         <div class="tc-card-right">
           <div class="tc-date">
-            <div>${fmtDateShort(tc.updatedTimestamp||tc.createdTimestamp)}</div>
-            <div style="color:var(--gray-mid);font-size:9px;">v${tc.version||1} · ${escHtml(tc.createdByName||tc.createdBy)}</div>
+            <div>${fmtDateShort(tc.updatedTimestamp || tc.createdTimestamp)}</div>
+            <div style="color:var(--gray-mid);font-size:9px;">v${tc.version || 1} · ${escHtml(tc.createdByName || tc.createdBy)}</div>
           </div>
-          <button class="tc-expand-btn btn-open-edit ${isOpen?'open':''}" data-id="${tc.testCaseId}" title="${canEdit?'Edit':'View'}">
+          <button class="tc-expand-btn btn-open-edit ${isOpen ? 'open' : ''}" data-id="${tc.testCaseId}" title="${canEdit ? 'Edit' : 'View'}">
             ${canEdit ? '✏️' : '▾'}
           </button>
         </div>
@@ -1507,7 +1602,7 @@ function initUpdateTestPage() {
 
   function openCard(tcId) {
     activeEditId = tcId;
-    hasUnsaved   = false;
+    hasUnsaved = false;
     document.getElementById('unsavedBadge').classList.remove('visible');
     render();
     // Wire tag inputs and step builders after render
@@ -1517,7 +1612,7 @@ function initUpdateTestPage() {
     // Scroll card into view
     setTimeout(() => {
       const el = document.querySelector(`[data-id="${tcId}"]`);
-      el?.scrollIntoView({ behavior:'smooth', block:'nearest' });
+      el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 100);
   }
 
@@ -1551,7 +1646,7 @@ function initUpdateTestPage() {
 
   // ── Tag input wiring for update cards ────────────────────
   function wireTagInputsForUpdate(tcId) {
-    const wrapper  = document.getElementById(`upd-tagwrap-${tcId}`);
+    const wrapper = document.getElementById(`upd-tagwrap-${tcId}`);
     if (!wrapper) return;
     const tagInput = wrapper.querySelector('.upd-tag-input');
     if (!tagInput) return;
@@ -1564,7 +1659,7 @@ function initUpdateTestPage() {
     tagInput.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ',') {
         e.preventDefault();
-        const v = tagInput.value.trim().replace(/,/g,'');
+        const v = tagInput.value.trim().replace(/,/g, '');
         if (!v) return;
         const chip = document.createElement('span');
         chip.className = 'tag-chip';
@@ -1610,114 +1705,154 @@ function initUpdateTestPage() {
   }
 
   function renumberSteps(list) {
-    list.querySelectorAll('.step-number').forEach((n,i) => { n.textContent = `${i+1}.`; });
+    list.querySelectorAll('.step-number').forEach((n, i) => { n.textContent = `${i + 1}.`; });
   }
 
   // ── Collect updated values from open edit card ────────────
   function collectUpdates(tcId) {
-    const tc      = allTestCases.find(t => t.testCaseId === tcId);
-    const nameEl  = document.getElementById(`upd-name-${tcId}`);
-    const descEl  = document.getElementById(`upd-desc-${tcId}`);
-    const projEl  = document.getElementById(`upd-project-${tcId}`);
-    const prioEl  = document.getElementById(`upd-priority-${tcId}`);
-    const envEl   = document.getElementById(`upd-env-${tcId}`);
-    const wrap    = document.getElementById(`upd-tagwrap-${tcId}`);
+    const tc = allTestCases.find(t => t.testCaseId === tcId);
+    const nameEl = document.getElementById(`upd-name-${tcId}`);
+    const descEl = document.getElementById(`upd-desc-${tcId}`);
+    const projEl = document.getElementById(`upd-project-${tcId}`);
+    const prioEl = document.getElementById(`upd-priority-${tcId}`);
+    const envEl = document.getElementById(`upd-env-${tcId}`);
+    const wrap = document.getElementById(`upd-tagwrap-${tcId}`);
 
     let valid = true;
     const setErr = (el, hintId, msg) => {
       el?.classList.add('input-error');
-      const h = document.getElementById(hintId); if (h) { h.textContent=msg; h.classList.add('visible'); }
+      const h = document.getElementById(hintId); if (h) { h.textContent = msg; h.classList.add('visible'); }
       valid = false;
     };
     const clearErr = el => el?.classList.remove('input-error');
 
     const name = nameEl?.value.trim() || '';
-    if (!name) setErr(nameEl, `upd-hint-name-${tcId}`, 'Name cannot be empty.'); else clearErr(nameEl);
+    if (!textRules(name).valid) setErr(nameEl, `upd-hint-name-${tcId}`, 'Name cannot be empty.'); else clearErr(nameEl);
 
     const desc = descEl?.value.trim() || '';
-    if (!desc) setErr(descEl, `upd-hint-desc-${tcId}`, 'Description cannot be empty.'); else clearErr(descEl);
+    if (!textRules(desc).valid) setErr(descEl, `upd-hint-desc-${tcId}`, 'Description cannot be empty.'); else clearErr(descEl);
 
     // Collect dynamic data
     const dynConfig = DYNAMIC_FIELD_CONFIGS[tc?.testingTypeId];
-    const dynData   = { ...(tc?.dynamicData || {}) };
+    const dynData = { ...(tc?.dynamicData || {}) };
     if (dynConfig) {
       dynConfig.fields.forEach(f => {
+
         if (f.type === 'steps') {
-          const list  = document.getElementById(`upd-steps-${tcId}-${f.id}`);
-          if (list) dynData[f.id] = Array.from(list.querySelectorAll('.step-input')).map(i => i.value.trim()).filter(Boolean);
-        } else {
-          const el = document.getElementById(`upd-dyn-${tcId}-${f.id}`);
-          if (el) dynData[f.id] = el.value.trim();
+
+          const list = document.getElementById(
+            `upd-steps-${tcId}-${f.id}`
+          );
+
+          const steps = list
+            ? Array.from(list.querySelectorAll('.step-input'))
+              .map(i => i.value.trim())
+              .filter(Boolean)
+            : [];
+
+          dynData[f.id] = steps;
+
+          if (steps.some(step => !textRules(step).valid)) {
+            valid = false;
+          }
+        }
+        else {
+
+          const el = document.getElementById(
+            `upd-dyn-${tcId}-${f.id}`
+          );
+
+          const val = el ? el.value.trim() : '';
+
+          dynData[f.id] = val;
+
+          if (!val) return;
+
+          if (NUMERIC_FIELDS.includes(f.id)) {
+
+            if (!numericRules(val).valid) {
+              el.classList.add('input-error');
+              valid = false;
+            }
+
+          } else {
+
+            if (!textRules(val).valid) {
+              el.classList.add('input-error');
+              valid = false;
+            }
+
+          }
         }
       });
     }
 
-    // Collect tags
-    const tags = wrap ? Array.from(wrap.querySelectorAll('.tag-chip')).map(c => c.textContent.replace('×','').trim()).filter(Boolean) : (tc?.tags || []);
+  // Collect tags
+  const tags = wrap ? Array.from(wrap.querySelectorAll('.tag-chip')).map(c => c.textContent.replace('×', '').trim()).filter(Boolean) : (tc?.tags || []);
 
-    return {
-      valid,
-      updates: {
-        testCaseName:      name,
-        description:       desc,
-        projectId:         projEl?.value  || tc?.projectId,
-        priority:          prioEl?.value  || tc?.priority,
-        environment:       envEl?.value   || tc?.environment,
-        tags,
-        dynamicData:       dynData,
-        lastUpdatedByName: user.name,
-      }
-    };
-  }
-
-  // ── Save the update ───────────────────────────────────────
-  async function saveUpdate(tcId) {
-    const { valid, updates } = collectUpdates(tcId);
-    if (!valid) { showToast('⚠ Please fix the highlighted fields.', 'error'); return; }
-
-    const btn = document.querySelector(`.btn-save-update[data-id="${tcId}"]`);
-    setLoading(btn, true);
-    try {
-      const res  = await fetch(`${API_BASE}/test-cases/${tcId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ updates, userPosition: user.position, employeeId: user.employeeId })
-      });
-      const data = await res.json();
-      setLoading(btn, false, '💾 Save Changes');
-      if (data.success) {
-        // Update local state
-        const idx = allTestCases.findIndex(t => t.testCaseId === tcId);
-        if (idx !== -1) allTestCases[idx] = data.testCase;
-        activeEditId = null; hasUnsaved = false;
-        document.getElementById('unsavedBadge').classList.remove('visible');
-        showToast(`✅ Test case updated to v${data.testCase.version}`, 'success');
-        render();
-      } else {
-        showToast(`✗ ${data.message}`, 'error');
-      }
-    } catch {
-      setLoading(btn, false, '💾 Save Changes');
-      showToast('⚠ Server unreachable.', 'error');
+  return {
+    valid,
+    updates: {
+      testCaseName: name,
+      description: desc,
+      projectId: projEl?.value || tc?.projectId,
+      priority: prioEl?.value || tc?.priority,
+      environment: envEl?.value || tc?.environment,
+      tags,
+      dynamicData: dynData,
+      lastUpdatedByName: user.name,
     }
+  };
+}
+
+// ── Save the update ───────────────────────────────────────
+async function saveUpdate(tcId) {
+  const { valid, updates } = collectUpdates(tcId);
+  if (!valid) { showToast('⚠ Please fix the highlighted fields.', 'error'); return; }
+
+  const btn = document.querySelector(`.btn-save-update[data-id="${tcId}"]`);
+  setLoading(btn, true);
+  try {
+    const res = await fetch(`${API_BASE}/test-cases/${tcId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ updates, userPosition: user.position, employeeId: user.employeeId })
+    });
+    const data = await res.json();
+    setLoading(btn, false, '💾 Save Changes');
+    if (data.success) {
+      // Update local state
+      const idx = allTestCases.findIndex(t => t.testCaseId === tcId);
+      if (idx !== -1) allTestCases[idx] = data.testCase;
+      activeEditId = null; hasUnsaved = false;
+      document.getElementById('unsavedBadge').classList.remove('visible');
+      showToast(`✅ Test case updated to v${data.testCase.version}`, 'success');
+      render();
+    } else {
+      showToast(`✗ ${data.message}`, 'error');
+    }
+  } catch {
+    setLoading(btn, false, '💾 Save Changes');
+    showToast('⚠ Server unreachable.', 'error');
   }
+}
 
-  // ── Discard modal ─────────────────────────────────────────
-  document.getElementById('discardCancel')?.addEventListener('click', () => {
-    pendingOpenId = null; closeModal('discardModal');
-  });
-  document.getElementById('discardConfirm')?.addEventListener('click', () => {
-    closeModal('discardModal');
-    const id = pendingOpenId; pendingOpenId = null;
-    activeEditId = null; hasUnsaved = false;
-    openCard(id);
-  });
+// ── Discard modal ─────────────────────────────────────────
+document.getElementById('discardCancel')?.addEventListener('click', () => {
+  pendingOpenId = null; closeModal('discardModal');
+});
+document.getElementById('discardConfirm')?.addEventListener('click', () => {
+  closeModal('discardModal');
+  const id = pendingOpenId; pendingOpenId = null;
+  activeEditId = null; hasUnsaved = false;
+  openCard(id);
+});
 
-  // ── Filter + sort wiring ──────────────────────────────────
-  wireFilterInputs(render);
-  wireSortButtons((f, d) => { sortField = f; sortDir = d; render(); });
+// ── Filter + sort wiring ──────────────────────────────────
+wireFilterInputs(render);
+wireSortButtons((f, d) => { sortField = f; sortDir = d; render(); });
 
-  loadTestCases();
+loadTestCases();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1731,33 +1866,33 @@ function initDeleteTestPage() {
   if (!user.name) { window.location.href = 'index.html'; return; }
   wireNavBar(user);
 
-  const perms      = PERMISSIONS[user.position] || PERMISSIONS['Employee'];
+  const perms = PERMISSIONS[user.position] || PERMISSIONS['Employee'];
   const deleteScope = perms.delete;
 
   // ── No permission state ───────────────────────────────────
   if (!deleteScope) {
-    document.getElementById('noPermState').style.display     = 'block';
+    document.getElementById('noPermState').style.display = 'block';
     document.getElementById('deleteInterface').style.display = 'none';
-    document.getElementById('noPermRole').textContent        = user.position;
+    document.getElementById('noPermRole').textContent = user.position;
     return;
   }
 
   // ── Show delete type warning banner ──────────────────────
   const deleteDescriptions = {
-    soft_project: { title:'Soft Delete — Project Scope',      desc:'Test cases will be marked as deleted but not permanently removed. Only cases within your project scope can be deleted.',   pillText:'SOFT DELETE', pillCls:'del-type-soft' },
-    soft:         { title:'Soft Delete',                       desc:'Test cases will be marked as deleted but can be restored by Senior Manager and above.',                                    pillText:'SOFT DELETE', pillCls:'del-type-soft' },
-    soft_restore: { title:'Soft Delete + Restore',             desc:'You can soft-delete cases and restore previously soft-deleted ones.',                                                       pillText:'SOFT + RESTORE', pillCls:'del-type-soft' },
-    permanent:    { title:'Permanent Delete — Director Access',desc:'Test cases will be permanently removed from the system and cannot be recovered.',                                          pillText:'PERMANENT DELETE', pillCls:'del-type-hard' },
+    soft_project: { title: 'Soft Delete — Project Scope', desc: 'Test cases will be marked as deleted but not permanently removed. Only cases within your project scope can be deleted.', pillText: 'SOFT DELETE', pillCls: 'del-type-soft' },
+    soft: { title: 'Soft Delete', desc: 'Test cases will be marked as deleted but can be restored by Senior Manager and above.', pillText: 'SOFT DELETE', pillCls: 'del-type-soft' },
+    soft_restore: { title: 'Soft Delete + Restore', desc: 'You can soft-delete cases and restore previously soft-deleted ones.', pillText: 'SOFT + RESTORE', pillCls: 'del-type-soft' },
+    permanent: { title: 'Permanent Delete — Director Access', desc: 'Test cases will be permanently removed from the system and cannot be recovered.', pillText: 'PERMANENT DELETE', pillCls: 'del-type-hard' },
   };
   const dd = deleteDescriptions[deleteScope] || deleteDescriptions.soft;
   document.getElementById('deleteWarnTitle').textContent = dd.title;
-  document.getElementById('deleteWarnDesc').textContent  = dd.desc;
-  document.getElementById('deleteTypePill').innerHTML    = `<span class="${dd.pillCls}">${dd.pillText}</span>`;
+  document.getElementById('deleteWarnDesc').textContent = dd.desc;
+  document.getElementById('deleteTypePill').innerHTML = `<span class="${dd.pillCls}">${dd.pillText}</span>`;
 
   let allTestCases = [];
-  let projectsMap  = {};
-  let sortField    = 'createdTimestamp';
-  let sortDir      = 'desc';
+  let projectsMap = {};
+  let sortField = 'createdTimestamp';
+  let sortDir = 'desc';
   let pendingDelete = null; // { tcId, name }
 
   loadProjectsIntoSelect('filterProject').then(m => { projectsMap = m; });
@@ -1767,8 +1902,8 @@ function initDeleteTestPage() {
     showSkeletons('tcCardList');
     try {
       const params = new URLSearchParams({ userPosition: user.position, employeeId: user.employeeId });
-      const res    = await fetch(`${API_BASE}/test-cases?${params}`);
-      const data   = await res.json();
+      const res = await fetch(`${API_BASE}/test-cases?${params}`);
+      const data = await res.json();
       if (data.success) { allTestCases = data.testCases; render(); }
       else showListError(data.message);
     } catch { showListError('Could not connect to server. Make sure it is running on port 3000.'); }
@@ -1784,7 +1919,7 @@ function initDeleteTestPage() {
   function canDeleteThisTc(tc) {
     if (!deleteScope) return false;
     if (deleteScope === 'soft_project') {
-      const lowerTiers = Object.entries(PERMISSIONS).filter(([,p]) => p.tier <= perms.tier).map(([pos]) => pos);
+      const lowerTiers = Object.entries(PERMISSIONS).filter(([, p]) => p.tier <= perms.tier).map(([pos]) => pos);
       return lowerTiers.includes(tc.creatorPosition) || tc.createdBy === user.employeeId;
     }
     return true; // Manager and above
@@ -1793,8 +1928,8 @@ function initDeleteTestPage() {
   // ── Render ────────────────────────────────────────────────
   function render() {
     const filtered = sortCases(applyFilters(allTestCases, projectsMap), sortField, sortDir);
-    const list     = document.getElementById('tcCardList');
-    const countEl  = document.getElementById('resultsCount');
+    const list = document.getElementById('tcCardList');
+    const countEl = document.getElementById('resultsCount');
     if (countEl) countEl.innerHTML = `Showing <strong>${filtered.length}</strong> of <strong>${allTestCases.length}</strong> test cases`;
 
     if (!filtered.length) {
@@ -1813,7 +1948,7 @@ function initDeleteTestPage() {
       head.addEventListener('click', e => {
         if (e.target.closest('.btn-danger,.btn-secondary')) return;
         const card = head.closest('.tc-card');
-        const btn  = head.querySelector('.tc-expand-btn');
+        const btn = head.querySelector('.tc-expand-btn');
         card.classList.toggle('expanded');
         btn.classList.toggle('open');
       });
@@ -1823,7 +1958,7 @@ function initDeleteTestPage() {
     list.querySelectorAll('.btn-trigger-delete').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        const tcId   = btn.dataset.id;
+        const tcId = btn.dataset.id;
         const tcName = btn.dataset.name;
         triggerDeleteModal(tcId, tcName);
       });
@@ -1831,13 +1966,13 @@ function initDeleteTestPage() {
   }
 
   function buildDeleteCard(tc) {
-    const icon       = typeIcon(tc.testingTypeId || tc.testingType);
-    const priCls     = `tc-pill-${(tc.priority||'low').toLowerCase()}`;
-    const statusCls  = tc.isApproved ? 'tc-pill-approved' : (tc.status==='Draft' ? 'tc-pill-draft' : 'tc-pill-pending');
-    const statusLabel= tc.isApproved ? '✓ Approved' : (tc.status || 'Draft');
-    const projName   = projectsMap[tc.projectId] || tc.projectId || '—';
-    const canDel     = canDeleteThisTc(tc);
-    const isPermanent= deleteScope === 'permanent';
+    const icon = typeIcon(tc.testingTypeId || tc.testingType);
+    const priCls = `tc-pill-${(tc.priority || 'low').toLowerCase()}`;
+    const statusCls = tc.isApproved ? 'tc-pill-approved' : (tc.status === 'Draft' ? 'tc-pill-draft' : 'tc-pill-pending');
+    const statusLabel = tc.isApproved ? '✓ Approved' : (tc.status || 'Draft');
+    const projName = projectsMap[tc.projectId] || tc.projectId || '—';
+    const canDel = canDeleteThisTc(tc);
+    const isPermanent = deleteScope === 'permanent';
 
     return `
     <div class="tc-card" data-id="${tc.testCaseId}">
@@ -1848,15 +1983,15 @@ function initDeleteTestPage() {
           <div class="tc-card-meta">
             <span class="tc-pill tc-pill-id">${tc.testCaseId}</span>
             <span class="tc-pill ${statusCls}">${statusLabel}</span>
-            <span class="tc-pill ${priCls}">${tc.priority||'—'}</span>
-            <span class="tc-pill tc-pill-env">${tc.environment||'—'}</span>
-            <span class="tc-pill tc-pill-type">${tc.testingType||'—'}</span>
+            <span class="tc-pill ${priCls}">${tc.priority || '—'}</span>
+            <span class="tc-pill tc-pill-env">${tc.environment || '—'}</span>
+            <span class="tc-pill tc-pill-type">${tc.testingType || '—'}</span>
           </div>
         </div>
         <div class="tc-card-right">
           <div class="tc-date">
             <div>${fmtDateShort(tc.createdTimestamp)}</div>
-            <div style="color:var(--gray-mid);font-size:9px;">by ${escHtml(tc.createdByName||tc.createdBy)}</div>
+            <div style="color:var(--gray-mid);font-size:9px;">by ${escHtml(tc.createdByName || tc.createdBy)}</div>
           </div>
           <button class="tc-expand-btn" title="Expand details">▾</button>
         </div>
@@ -1875,19 +2010,19 @@ function initDeleteTestPage() {
           </div>
           <div class="tc-detail-field">
             <div class="tc-detail-label">Testing Type</div>
-            <div class="tc-detail-value">${icon} ${escHtml(tc.testingType||'—')}</div>
+            <div class="tc-detail-value">${icon} ${escHtml(tc.testingType || '—')}</div>
           </div>
           <div class="tc-detail-field">
             <div class="tc-detail-label">Priority</div>
-            <div class="tc-detail-value">${escHtml(tc.priority||'—')}</div>
+            <div class="tc-detail-value">${escHtml(tc.priority || '—')}</div>
           </div>
           <div class="tc-detail-field">
             <div class="tc-detail-label">Environment</div>
-            <div class="tc-detail-value">${escHtml(tc.environment||'—')}</div>
+            <div class="tc-detail-value">${escHtml(tc.environment || '—')}</div>
           </div>
           <div class="tc-detail-field">
             <div class="tc-detail-label">Version</div>
-            <div class="tc-detail-value">v${tc.version||1}</div>
+            <div class="tc-detail-value">v${tc.version || 1}</div>
           </div>
           <div class="tc-detail-field">
             <div class="tc-detail-label">Approval</div>
@@ -1895,11 +2030,11 @@ function initDeleteTestPage() {
           </div>
           <div class="tc-detail-field">
             <div class="tc-detail-label">Created By</div>
-            <div class="tc-detail-value">${escHtml(tc.createdByName||tc.createdBy)}</div>
+            <div class="tc-detail-value">${escHtml(tc.createdByName || tc.createdBy)}</div>
           </div>
           <div class="tc-detail-field" style="grid-column:1/-1;">
             <div class="tc-detail-label">Description</div>
-            <div class="tc-detail-value">${escHtml(tc.description||'—')}</div>
+            <div class="tc-detail-value">${escHtml(tc.description || '—')}</div>
           </div>
         </div>
       </div>
@@ -1907,14 +2042,14 @@ function initDeleteTestPage() {
       <!-- Delete action row always visible at bottom -->
       <div class="tc-card-del-row">
         ${!canDel
-          ? `<span style="font-family:var(--font-mono);font-size:10px;color:var(--gray-mid);">🔒 Outside your delete scope</span>`
-          : `<span class="${isPermanent ? 'del-type-hard' : 'del-type-soft'}">${isPermanent ? '⚠ Permanent' : '⚠ Soft Delete'}</span>
+        ? `<span style="font-family:var(--font-mono);font-size:10px;color:var(--gray-mid);">🔒 Outside your delete scope</span>`
+        : `<span class="${isPermanent ? 'del-type-hard' : 'del-type-soft'}">${isPermanent ? '⚠ Permanent' : '⚠ Soft Delete'}</span>
              <button class="btn btn-danger btn-sm btn-trigger-delete"
                data-id="${tc.testCaseId}"
                data-name="${escHtml(tc.testCaseName)}">
                🗑️ ${isPermanent ? 'Delete Permanently' : 'Delete'}
              </button>`
-        }
+      }
       </div>
     </div>`;
   }
@@ -1923,7 +2058,7 @@ function initDeleteTestPage() {
   function triggerDeleteModal(tcId, tcName) {
     pendingDelete = { tcId, tcName };
     const isPermanent = deleteScope === 'permanent';
-    document.getElementById('confirmTcId').textContent   = tcId;
+    document.getElementById('confirmTcId').textContent = tcId;
     document.getElementById('confirmTcName').textContent = tcName;
     document.getElementById('confirmDeleteMsg').textContent = isPermanent
       ? 'This will permanently remove this test case from the system. This action CANNOT be undone.'
@@ -1944,7 +2079,7 @@ function initDeleteTestPage() {
     const btn = document.getElementById('modalConfirmDelete');
     setLoading(btn, true);
     try {
-      const res  = await fetch(`${API_BASE}/test-cases/${tcId}`, {
+      const res = await fetch(`${API_BASE}/test-cases/${tcId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userPosition: user.position, employeeId: user.employeeId, deletedByName: user.name })
@@ -1984,10 +2119,10 @@ function initDeleteTestPage() {
 
 document.addEventListener('DOMContentLoaded', () => {
   const page = window.location.pathname;
-  if      (page.includes('register.html'))   initRegisterPage();
-  else if (page.includes('create_test.html'))initCreateTestPage();
-  else if (page.includes('read_test.html'))  initReadTestPage();
-  else if (page.includes('update_test.html'))initUpdateTestPage();
-  else if (page.includes('delete_test.html'))initDeleteTestPage();
-  else                                       initLoginPage();
+  if (page.includes('register.html')) initRegisterPage();
+  else if (page.includes('create_test.html')) initCreateTestPage();
+  else if (page.includes('read_test.html')) initReadTestPage();
+  else if (page.includes('update_test.html')) initUpdateTestPage();
+  else if (page.includes('delete_test.html')) initDeleteTestPage();
+  else initLoginPage();
 });
