@@ -200,9 +200,51 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
+function showFieldError(el, hintId, message) {
+  if (el) el.classList.add('input-error');
+
+  const hint = document.getElementById(hintId);
+
+  if (hint) {
+    hint.textContent = message;
+    hint.classList.add('visible');
+  }
+}
+
+function clearFieldError(el, hintId) {
+  if (el) el.classList.remove('input-error');
+
+  const hint = document.getElementById(hintId);
+
+  if (hint) {
+    hint.classList.remove('visible');
+  }
+}
+
 // ═══════════════════════════════════════════════════════════
 // TEST CASE VALIDATION RULES
 // ═══════════════════════════════════════════════════════════
+
+function showFieldError(el, hintId, message) {
+    if (el) el.classList.add('input-error');
+
+    const hint = document.getElementById(hintId);
+
+    if (hint) {
+        hint.textContent = message;
+        hint.classList.add('visible');
+    }
+}
+
+function clearFieldError(el, hintId) {
+    if (el) el.classList.remove('input-error');
+
+    const hint = document.getElementById(hintId);
+
+    if (hint) {
+        hint.classList.remove('visible');
+    }
+}
 
 function textRules(value, minLength = 10) {
   const v = String(value || '').trim();
@@ -1432,18 +1474,25 @@ function initUpdateTestPage() {
       dynConfig.fields.forEach(f => {
         const req = f.required ? `<span style="color:var(--error)"> *</span>` : '';
         const val = tc.dynamicData?.[f.id] || '';
+        
         if (f.type === 'textarea') {
           dynHtml += `<div class="form-group"><label>${f.label}${req}</label>
             <textarea id="upd-dyn-${tc.testCaseId}-${f.id}" class="forge-textarea" rows="3"
-              data-original="${escHtml(String(val))}">${escHtml(String(val))}</textarea></div>`;
-        } else if (f.type === 'select') {
+              data-original="${escHtml(String(val))}">${escHtml(String(val))}</textarea>
+              <span class="field-hint" id="upd-hint-${tc.testCaseId}-${f.id}"> </span></div>`;
+        } 
+        
+        else if (f.type === 'select') {
           const opts = f.options.map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`).join('');
           dynHtml += `<div class="form-group"><label>${f.label}${req}</label>
             <div class="select-wrapper">
               <select id="upd-dyn-${tc.testCaseId}-${f.id}" class="forge-select" data-original="${escHtml(val)}">
                 <option value="">— Select —</option>${opts}</select>
+              <span class="field-hint" id="upd-hint-${tc.testCaseId}-${f.id}"> </span>  
               <span class="select-arrow">▾</span></div></div>`;
-        } else if (f.type === 'steps') {
+        } 
+        
+        else if (f.type === 'steps') {
           const steps = Array.isArray(val) ? val : [];
           const stepsHtml = steps.length
             ? steps.map((s, i) => `<div class="step-row">
@@ -1455,11 +1504,17 @@ function initUpdateTestPage() {
                <button class="step-remove" title="Remove">×</button></div>`;
           dynHtml += `<div class="form-group"><label>${f.label}${req}</label>
             <div class="steps-list" id="upd-steps-${tc.testCaseId}-${f.id}">${stepsHtml}</div>
-            <button class="add-step-btn" data-steps-id="upd-steps-${tc.testCaseId}-${f.id}">＋ Add Step</button></div>`;
-        } else {
+            <button class="add-step-btn" data-steps-id="upd-steps-${tc.testCaseId}-${f.id}">＋ Add Step</button>
+            <span class="field-hint" id="upd-hint-${tc.testCaseId}-${f.id}"> </span>
+            </div>`;
+        } 
+        
+        else {
           dynHtml += `<div class="form-group"><label>${f.label}${req}</label>
             <input type="text" id="upd-dyn-${tc.testCaseId}-${f.id}" class="forge-input"
-              value="${escHtml(String(val))}" data-original="${escHtml(String(val))}" /></div>`;
+              value="${escHtml(String(val))}" data-original="${escHtml(String(val))}" />
+            <span class="field-hint" id="upd-hint-${tc.testCaseId}-${f.id}"> </span>
+          </div>`;
         }
       });
       dynHtml += '</div>';
@@ -1710,85 +1765,161 @@ function initUpdateTestPage() {
 
   // ── Collect updated values from open edit card ────────────
   function collectUpdates(tcId) {
-    const tc = allTestCases.find(t => t.testCaseId === tcId);
-    const nameEl = document.getElementById(`upd-name-${tcId}`);
-    const descEl = document.getElementById(`upd-desc-${tcId}`);
-    const projEl = document.getElementById(`upd-project-${tcId}`);
-    const prioEl = document.getElementById(`upd-priority-${tcId}`);
-    const envEl = document.getElementById(`upd-env-${tcId}`);
-    const wrap = document.getElementById(`upd-tagwrap-${tcId}`);
 
-    let valid = true;
-    const setErr = (el, hintId, msg) => {
-      el?.classList.add('input-error');
-      const h = document.getElementById(hintId); if (h) { h.textContent = msg; h.classList.add('visible'); }
-      valid = false;
-    };
-    const clearErr = el => el?.classList.remove('input-error');
+  const tc = allTestCases.find(t => t.testCaseId === tcId);
 
-    const name = nameEl?.value.trim() || '';
-    if (!textRules(name).valid) setErr(nameEl, `upd-hint-name-${tcId}`, 'Name cannot be empty.'); else clearErr(nameEl);
+  const nameEl = document.getElementById(`upd-name-${tcId}`);
+  const descEl = document.getElementById(`upd-desc-${tcId}`);
+  const projEl = document.getElementById(`upd-project-${tcId}`);
+  const prioEl = document.getElementById(`upd-priority-${tcId}`);
+  const envEl  = document.getElementById(`upd-env-${tcId}`);
+  const wrap   = document.getElementById(`upd-tagwrap-${tcId}`);
 
-    const desc = descEl?.value.trim() || '';
-    if (!textRules(desc).valid) setErr(descEl, `upd-hint-desc-${tcId}`, 'Description cannot be empty.'); else clearErr(descEl);
+  let valid = true;
 
-    // Collect dynamic data
-    const dynConfig = DYNAMIC_FIELD_CONFIGS[tc?.testingTypeId];
-    const dynData = { ...(tc?.dynamicData || {}) };
-    if (dynConfig) {
-      dynConfig.fields.forEach(f => {
+  const name = nameEl?.value.trim() || '';
 
-        if (f.type === 'steps') {
+  if (!textRules(name).valid) {
 
-          const list = document.getElementById(
-            `upd-steps-${tcId}-${f.id}`
-          );
+    showFieldError(
+      nameEl,
+      `upd-hint-name-${tcId}`,
+      'Name must contain at least 10 characters.'
+    );
 
-          const steps = list
-            ? Array.from(list.querySelectorAll('.step-input'))
+    valid = false;
+
+  } else {
+
+    clearFieldError(
+      nameEl,
+      `upd-hint-name-${tcId}`
+    );
+  }
+
+  const desc = descEl?.value.trim() || '';
+
+  if (!textRules(desc).valid) {
+
+    showFieldError(
+      descEl,
+      `upd-hint-desc-${tcId}`,
+      'Description must contain at least 10 characters.'
+    );
+
+    valid = false;
+
+  } else {
+
+    clearFieldError(
+      descEl,
+      `upd-hint-desc-${tcId}`
+    );
+  }
+
+  const dynConfig = DYNAMIC_FIELD_CONFIGS[tc?.testingTypeId];
+  const dynData = { ...(tc?.dynamicData || {}) };
+
+  if (dynConfig) {
+
+    dynConfig.fields.forEach(f => {
+
+      if (f.type === 'steps') {
+
+        const list = document.getElementById(
+          `upd-steps-${tcId}-${f.id}`
+        );
+
+        const steps = list
+          ? Array.from(list.querySelectorAll('.step-input'))
               .map(i => i.value.trim())
               .filter(Boolean)
-            : [];
+          : [];
 
-          dynData[f.id] = steps;
+        dynData[f.id] = steps;
 
-          if (steps.some(step => !textRules(step).valid)) {
-            valid = false;
-          }
-        }
-        else {
+        if (steps.some(step => !textRules(step).valid)) {
 
-          const el = document.getElementById(
-            `upd-dyn-${tcId}-${f.id}`
+          const hint = document.getElementById(
+            `upd-hint-${tcId}-${f.id}`
           );
 
-          const val = el ? el.value.trim() : '';
+          if (hint) {
+            hint.textContent =
+              'Each step must contain at least 10 characters.';
+            hint.classList.add('visible');
+          }
 
-          dynData[f.id] = val;
+          valid = false;
 
-          if (!val) return;
+        } else {
 
-          if (NUMERIC_FIELDS.includes(f.id)) {
+          document
+            .getElementById(`upd-hint-${tcId}-${f.id}`)
+            ?.classList.remove('visible');
+        }
 
-            if (!numericRules(val).valid) {
-              el.classList.add('input-error');
-              valid = false;
-            }
+      } else {
+
+        const el = document.getElementById(
+          `upd-dyn-${tcId}-${f.id}`
+        );
+
+        const val = el ? el.value.trim() : '';
+
+        dynData[f.id] = val;
+
+        if (!val) return;
+
+        if (NUMERIC_FIELDS.includes(f.id)) {
+
+          if (!numericRules(val).valid) {
+
+            showFieldError(
+              el,
+              `upd-hint-${tcId}-${f.id}`,
+              numericRules(val).message
+            );
+
+            valid = false;
 
           } else {
 
-            if (!textRules(val).valid) {
-              el.classList.add('input-error');
-              valid = false;
-            }
+            clearFieldError(
+              el,
+              `upd-hint-${tcId}-${f.id}`
+            );
+          }
 
+        } else {
+
+          if (!textRules(val).valid) {
+
+            showFieldError(
+              el,
+              `upd-hint-${tcId}-${f.id}`,
+              textRules(val).message
+            );
+
+            valid = false;
+
+          } else {
+
+            clearFieldError(
+              el,
+              `upd-hint-${tcId}-${f.id}`
+            );
           }
         }
-      });
-    }
+      }
+    });
+  }
 
-  // Collect tags
-  const tags = wrap ? Array.from(wrap.querySelectorAll('.tag-chip')).map(c => c.textContent.replace('×', '').trim()).filter(Boolean) : (tc?.tags || []);
+  const tags = wrap
+    ? Array.from(wrap.querySelectorAll('.tag-chip'))
+        .map(c => c.textContent.replace('×', '').trim())
+        .filter(Boolean)
+    : (tc?.tags || []);
 
   return {
     valid,
@@ -1800,7 +1931,7 @@ function initUpdateTestPage() {
       environment: envEl?.value || tc?.environment,
       tags,
       dynamicData: dynData,
-      lastUpdatedByName: user.name,
+      lastUpdatedByName: user.name
     }
   };
 }
