@@ -413,6 +413,5 @@ app.listen(PORT, () => {
   console.log(`\n╔══════════════════════════════════════════════╗`);
   console.log(`║   DataOps Forge — Server Running             ║`);
   console.log(`║   http://localhost:${PORT}                      ║`);
-  console.log(`║   Week 4: Update + Delete APIs active      ║`);
   console.log(`╚══════════════════════════════════════════════╝\n`);
 });
