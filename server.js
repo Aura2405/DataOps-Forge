@@ -246,7 +246,13 @@ app.get('/api/test-cases', (req, res) => {
     return res.status(403).json({ success: false, message: `Unknown role: ${position}` });
   }
 
-  let testCases = readJSON(TEST_DB).filter(tc => !tc.isDeleted);
+  const includeDeleted = req.query.includeDeleted === 'true' || req.query.includeDeleted === '1';
+  if (includeDeleted && !perms.delete) {
+    return res.status(403).json({ success: false, message: 'Unauthorized to view deleted test cases.' });
+  }
+
+  let testCases = readJSON(TEST_DB);
+  if (!includeDeleted) testCases = testCases.filter(tc => !tc.isDeleted);
   const scope   = perms.read;
 
   // Apply RBAC scope filter
@@ -339,7 +345,7 @@ app.put('/api/test-cases/:id', (req, res) => {
 // DELETE /api/test-cases/:id — delete a test case (RBAC: delete scope enforced)
 app.delete('/api/test-cases/:id', (req, res) => {
   const { id }          = req.params;
-  const { userPosition, employeeId } = req.body;
+  const { userPosition, employeeId, deletedByName, deleteType } = req.body;
 
   if (!userPosition) return res.status(401).json({ success: false, message: 'Unauthorized.' });
 
@@ -348,14 +354,23 @@ app.delete('/api/test-cases/:id', (req, res) => {
   if (!perms.delete) return res.status(403).json({ success: false, message: `Role '${userPosition}' does not have delete permission.` });
 
   const testCases = readJSON(TEST_DB);
-  const idx       = testCases.findIndex(tc => tc.testCaseId === id && !tc.isDeleted);
+  const idx       = testCases.findIndex(tc => tc.testCaseId === id);
 
-  if (idx === -1) return res.status(404).json({ success: false, message: 'Test case not found or already deleted.' });
+  if (idx === -1) return res.status(404).json({ success: false, message: 'Test case not found.' });
 
   const tc = testCases[idx];
 
   // ── RBAC delete scope check ───────────────────────────────
   const deleteScope = perms.delete;
+  const resolvedDeleteType = deleteType || (deleteScope === 'permanent' ? 'permanent' : 'soft');
+
+  if (resolvedDeleteType === 'permanent' && deleteScope !== 'permanent') {
+    return res.status(403).json({ success: false, message: 'Only Directors can permanently delete test cases.' });
+  }
+
+  if (tc.isDeleted && resolvedDeleteType === 'soft') {
+    return res.status(400).json({ success: false, message: 'Test case is already deleted.' });
+  }
 
   if (deleteScope === 'soft_project') {
     // Project Lead: can only delete cases they created or lower-tier within project
@@ -367,23 +382,26 @@ app.delete('/api/test-cases/:id', (req, res) => {
   // Manager / Senior Manager / Director — full or broad scope, allow
 
   // ── Perform delete ─────────────────────────────────────────
-  if (deleteScope === 'permanent') {
+  let deletedTypeLabel;
+  if (resolvedDeleteType === 'permanent') {
     // Director: hard delete — remove from array entirely
     testCases.splice(idx, 1);
+    deletedTypeLabel = 'permanently deleted';
   } else {
-    // All others: soft delete — mark isDeleted
+    // Soft delete — mark isDeleted
     testCases[idx] = {
       ...tc,
       isDeleted:       true,
       deletedAt:       new Date().toISOString(),
       deletedBy:       employeeId,
-      deletedByName:   req.body.deletedByName || employeeId,
+      deletedByName:   deletedByName || employeeId,
     };
+    deletedTypeLabel = 'soft deleted';
   }
 
   writeJSON(TEST_DB, testCases);
 
-  // Remove from user's testCases array
+  // Remove from user's testCases array when the case is no longer active
   const users   = readJSON(USER_DB);
   const userIdx = users.findIndex(u => u.employeeId === tc.createdBy);
   if (userIdx !== -1) {
@@ -391,8 +409,53 @@ app.delete('/api/test-cases/:id', (req, res) => {
     writeJSON(USER_DB, users);
   }
 
-  const deleteType = deleteScope === 'permanent' ? 'permanently deleted' : 'soft deleted';
-  return res.json({ success: true, message: `Test case ${deleteType} successfully.`, deleteType });
+  return res.json({ success: true, message: `Test case ${deletedTypeLabel} successfully.`, deleteType: deletedTypeLabel });
+});
+
+// POST /api/test-cases/:id/restore — restore a soft-deleted test case
+app.post('/api/test-cases/:id/restore', (req, res) => {
+  const { id } = req.params;
+  const { userPosition, employeeId, restoredByName } = req.body;
+
+  if (!userPosition) return res.status(401).json({ success: false, message: 'Unauthorized.' });
+
+  const perms = PERMISSIONS[userPosition];
+  if (!perms) return res.status(403).json({ success: false, message: `Unknown role: ${userPosition}` });
+  if (perms.delete !== 'soft_restore' && perms.delete !== 'permanent') {
+    return res.status(403).json({ success: false, message: 'Role does not have restore privileges.' });
+  }
+
+  const testCases = readJSON(TEST_DB);
+  const idx = testCases.findIndex(tc => tc.testCaseId === id && tc.isDeleted);
+  if (idx === -1) return res.status(404).json({ success: false, message: 'Deleted test case not found.' });
+
+  const tc = testCases[idx];
+  testCases[idx] = {
+    ...tc,
+    isDeleted:       false,
+    deletedAt:       null,
+    deletedBy:       null,
+    deletedByName:   null,
+    restoredAt:      new Date().toISOString(),
+    restoredBy:      employeeId,
+    restoredByName:  restoredByName || employeeId,
+    updatedTimestamp: new Date().toISOString(),
+  };
+
+  writeJSON(TEST_DB, testCases);
+
+  // Re-add to creator's active test case list if missing
+  const users = readJSON(USER_DB);
+  const userIdx = users.findIndex(u => u.employeeId === tc.createdBy);
+  if (userIdx !== -1) {
+    users[userIdx].testCases = users[userIdx].testCases || [];
+    if (!users[userIdx].testCases.includes(id)) {
+      users[userIdx].testCases.push(id);
+      writeJSON(USER_DB, users);
+    }
+  }
+
+  return res.json({ success: true, message: 'Test case restored successfully.', testCase: testCases[idx] });
 });
 
 // ═══════════════════════════════════════════════════════════
