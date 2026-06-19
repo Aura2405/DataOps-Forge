@@ -2032,7 +2032,7 @@ function initDeleteTestPage() {
   async function loadTestCases() {
     showSkeletons('tcCardList');
     try {
-      const params = new URLSearchParams({ userPosition: user.position, employeeId: user.employeeId });
+      const params = new URLSearchParams({ userPosition: user.position, employeeId: user.employeeId, includeDeleted: 'true' });
       const res = await fetch(`${API_BASE}/test-cases?${params}`);
       const data = await res.json();
       if (data.success) { allTestCases = data.testCases; render(); }
@@ -2054,6 +2054,10 @@ function initDeleteTestPage() {
       return lowerTiers.includes(tc.creatorPosition) || tc.createdBy === user.employeeId;
     }
     return true; // Manager and above
+  }
+
+  function canRestoreThisTc(tc) {
+    return tc.isDeleted && (deleteScope === 'soft_restore' || deleteScope === 'permanent');
   }
 
   // ── Render ────────────────────────────────────────────────
@@ -2094,6 +2098,16 @@ function initDeleteTestPage() {
         triggerDeleteModal(tcId, tcName);
       });
     });
+
+    // Wire restore buttons
+    list.querySelectorAll('.btn-trigger-restore').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const tcId = btn.dataset.id;
+        const tcName = btn.dataset.name;
+        restoreTestCase(tcId, tcName);
+      });
+    });
   }
 
   function buildDeleteCard(tc) {
@@ -2106,7 +2120,7 @@ function initDeleteTestPage() {
     const isPermanent = deleteScope === 'permanent';
 
     return `
-    <div class="tc-card" data-id="${tc.testCaseId}">
+    <div class="tc-card ${tc.isDeleted ? 'tc-card-deleted' : ''}" data-id="${tc.testCaseId}">
       <div class="tc-card-head">
         <div class="tc-type-badge">${icon}</div>
         <div class="tc-card-main">
@@ -2114,6 +2128,7 @@ function initDeleteTestPage() {
           <div class="tc-card-meta">
             <span class="tc-pill tc-pill-id">${tc.testCaseId}</span>
             <span class="tc-pill ${statusCls}">${statusLabel}</span>
+            ${tc.isDeleted ? `<span class="tc-pill tc-pill-rejected">Deleted</span>` : ''}
             <span class="tc-pill ${priCls}">${tc.priority || '—'}</span>
             <span class="tc-pill tc-pill-env">${tc.environment || '—'}</span>
             <span class="tc-pill tc-pill-type">${tc.testingType || '—'}</span>
@@ -2172,15 +2187,19 @@ function initDeleteTestPage() {
 
       <!-- Delete action row always visible at bottom -->
       <div class="tc-card-del-row">
-        ${!canDel
-        ? `<span style="font-family:var(--font-mono);font-size:10px;color:var(--gray-mid);">🔒 Outside your delete scope</span>`
-        : `<span class="${isPermanent ? 'del-type-hard' : 'del-type-soft'}">${isPermanent ? '⚠ Permanent' : '⚠ Soft Delete'}</span>
-             <button class="btn btn-danger btn-sm btn-trigger-delete"
-               data-id="${tc.testCaseId}"
-               data-name="${escHtml(tc.testCaseName)}">
-               🗑️ ${isPermanent ? 'Delete Permanently' : 'Delete'}
-             </button>`
-      }
+        ${tc.isDeleted
+          ? canRestoreThisTc(tc)
+            ? `<button class="btn btn-secondary btn-sm btn-trigger-restore" data-id="${tc.testCaseId}" data-name="${escHtml(tc.testCaseName)}">↺ Restore</button>`
+            : `<span style="font-family:var(--font-mono);font-size:10px;color:var(--gray-mid);">🔒 Deleted test case — restore not allowed</span>`
+          : !canDel
+            ? `<span style="font-family:var(--font-mono);font-size:10px;color:var(--gray-mid);">🔒 Outside your delete scope</span>`
+            : `<span class="${isPermanent ? 'del-type-hard' : 'del-type-soft'}">${isPermanent ? '⚠ Permanent' : '⚠ Soft Delete'}</span>
+               <button class="btn btn-danger btn-sm btn-trigger-delete"
+                 data-id="${tc.testCaseId}"
+                 data-name="${escHtml(tc.testCaseName)}">
+                 🗑️ ${'Delete'}
+               </button>`
+        }
       </div>
     </div>`;
   }
@@ -2192,8 +2211,16 @@ function initDeleteTestPage() {
     document.getElementById('confirmTcId').textContent = tcId;
     document.getElementById('confirmTcName').textContent = tcName;
     document.getElementById('confirmDeleteMsg').textContent = isPermanent
-      ? 'This will permanently remove this test case from the system. This action CANNOT be undone.'
+      ? 'Choose whether to soft-delete or permanently remove this test case. Permanent deletion cannot be undone.'
       : 'This test case will be marked as deleted and hidden from views. It can be restored by a Senior Manager or Director.';
+    const modeBox = document.getElementById('deleteModeOptions');
+    if (modeBox) {
+      modeBox.style.display = isPermanent ? 'flex' : 'none';
+      if (isPermanent) {
+        const softRadio = modeBox.querySelector('input[value="soft"]');
+        if (softRadio) softRadio.checked = true;
+      }
+    }
     openModal('confirmDeleteModal');
   }
 
@@ -2204,26 +2231,58 @@ function initDeleteTestPage() {
     if (e.target === e.currentTarget) { pendingDelete = null; closeModal('confirmDeleteModal'); }
   });
 
+  async function restoreTestCase(tcId, tcName) {
+    const btn = document.querySelector(`.btn-trigger-restore[data-id="${tcId}"]`);
+    setLoading(btn, true);
+    try {
+      const res = await fetch(`${API_BASE}/test-cases/${tcId}/restore`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userPosition: user.position, employeeId: user.employeeId, restoredByName: user.name })
+      });
+      const data = await res.json();
+      setLoading(btn, false, '↺ Restore');
+      if (data.success) {
+        const idx = allTestCases.findIndex(tc => tc.testCaseId === tcId);
+        if (idx !== -1) allTestCases[idx] = data.testCase;
+        showToast(`↺ "${tcName}" restored successfully.`, 'success');
+        render();
+      } else {
+        showToast(`✗ ${data.message}`, 'error');
+      }
+    } catch {
+      setLoading(btn, false, '↺ Restore');
+      showToast('⚠ Server unreachable.', 'error');
+    }
+  }
+
   document.getElementById('modalConfirmDelete')?.addEventListener('click', async () => {
     if (!pendingDelete) return;
     const { tcId, tcName } = pendingDelete;
     const btn = document.getElementById('modalConfirmDelete');
     setLoading(btn, true);
     try {
+      const modeBox = document.getElementById('deleteModeOptions');
+      const deleteType = modeBox?.style.display === 'flex'
+        ? modeBox.querySelector('input[name="deleteMode"]:checked')?.value || 'soft'
+        : 'soft';
       const res = await fetch(`${API_BASE}/test-cases/${tcId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userPosition: user.position, employeeId: user.employeeId, deletedByName: user.name })
+        body: JSON.stringify({ userPosition: user.position, employeeId: user.employeeId, deletedByName: user.name, deleteType })
       });
       const data = await res.json();
       setLoading(btn, false, '🗑️ Delete');
       closeModal('confirmDeleteModal');
       pendingDelete = null;
       if (data.success) {
-        // Remove from local list
-        allTestCases = allTestCases.filter(tc => tc.testCaseId !== tcId);
-        showToast(`🗑️ "${tcName}" ${data.deleteType === 'permanently deleted' ? 'permanently deleted' : 'soft deleted'}.`, 'success');
-        // Flash the removed card briefly before re-render
+        if (data.deleteType === 'permanently deleted') {
+          allTestCases = allTestCases.filter(tc => tc.testCaseId !== tcId);
+        } else {
+          const idx = allTestCases.findIndex(tc => tc.testCaseId === tcId);
+          if (idx !== -1) allTestCases[idx] = { ...allTestCases[idx], isDeleted: true, deletedAt: new Date().toISOString() };
+        }
+        showToast(`🗑️ "${tcName}" ${data.deleteType}.`, 'success');
         const card = document.querySelector(`[data-id="${tcId}"]`);
         if (card) { card.classList.add('del-success-flash'); setTimeout(() => render(), 400); }
         else render();
