@@ -1743,8 +1743,6 @@ textarea.forge-textarea.input-success { border-color: var(--success) !important;
   margin-bottom: 20px;
 }
 
-.tc-detail-field { }
-
 .tc-detail-label {
   font-family: var(--font-mono);
   font-size: 9px;
@@ -2154,6 +2152,15 @@ select.field-changed {
   border-radius: 20px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+}
+
+.tc-card-deleted {
+  opacity: 0.85;
+  border-color: rgba(185, 28, 28, 0.25);
+  background: #fff4f4;
+}
+.tc-card-deleted .tc-card-head {
+  background: rgba(254, 226, 226, 0.72);
 }
 
 /* ── Confirm delete modal ─────────────────────────────────────── */
