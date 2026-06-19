@@ -499,8 +499,8 @@ This project is being built over 5 weekly sprints:
 | **1b** | Test Case Creation Form | ✅ **Complete** | `create_test.html` |
 | **2** | Read / Query with RBAC Filtering | ✅ **Complete** | `read_test.html` |
 | **3** | Password Policy + Confirm Field | ✅ **Complete** | `register.html` |
-| **4** | Update Test Cases (versioning) | 🔜 **Next** | `update_test.html` |
-| **4b** | Delete (soft + hard, role-scoped) | 🔜 **Next** | — |
+| **4** | Update Test Cases (versioning) | ✅ **Complete** | `update_test.html` |
+| **4b** | Delete (soft + hard, role-scoped) | ✅ **Complete** | — |
 | **5** | Approval Workflow | 📋 Planned | `approve_test.html` |
 | **5b** | Reports, Audit Log, Templates | 📋 Planned | `reports.html` |
 
