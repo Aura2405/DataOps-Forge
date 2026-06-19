@@ -172,6 +172,16 @@
       <p class="modal-message" id="confirmDeleteMsg">
         This action cannot be undone. The test case will be permanently removed.
       </p>
+      <div class="delete-mode-options" id="deleteModeOptions" style="display:none; margin-bottom:16px; gap:12px;">
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input type="radio" name="deleteMode" value="soft" checked />
+          Soft Delete — hide from views, can be restored by Senior Manager or Director
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input type="radio" name="deleteMode" value="permanent" />
+          Permanent Delete — remove from system forever
+        </label>
+      </div>
       <div class="btn-group">
         <button class="btn btn-secondary" id="modalCancelDelete">Cancel</button>
         <button class="btn btn-danger"    id="modalConfirmDelete">🗑️ Delete</button>
