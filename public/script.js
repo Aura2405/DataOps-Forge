@@ -1987,6 +1987,185 @@ loadTestCases();
 }
 
 // ═══════════════════════════════════════════════════════════
+// APPROVE TEST CASES PAGE  (approve_test.html)
+// ═══════════════════════════════════════════════════════════
+
+function initApproveTestPage() {
+  if (!document.getElementById('tcCardList') || !window.location.pathname.includes('approve_test')) return;
+
+  const user = JSON.parse(sessionStorage.getItem('forge_user') || '{}');
+  if (!user.name) { window.location.href = 'index.html'; return; }
+  wireNavBar(user);
+
+  const perms = PERMISSIONS[user.position] || PERMISSIONS['Employee'];
+  const canReview = perms.approve === 'review_only';
+  const canApprove = perms.approve === true;
+
+  const noAccess = document.getElementById('noApproveAccess');
+  const interfaceEl = document.getElementById('approveInterface');
+  const scopeBanner = document.getElementById('scopeBanner');
+
+  if (!canReview && !canApprove) {
+    if (scopeBanner) scopeBanner.style.display = 'none';
+    if (noAccess) {
+      document.querySelector('.no-access-role').textContent = user.position || '—';
+      noAccess.style.display = 'block';
+    }
+    if (interfaceEl) interfaceEl.style.display = 'none';
+    return;
+  }
+
+  if (scopeBanner) {
+    scopeBanner.className = `scope-banner ${canApprove ? 'scope-project' : 'scope-team'}`;
+    scopeBanner.innerHTML = `<span class="scope-banner-icon">${canApprove ? '✅' : '📝'}</span><div><strong>${canApprove ? 'Approve / Reject' : 'Review Only'}</strong> — ${canApprove ? 'You can approve or reject draft test cases.' : 'You can submit a review comment for draft test cases.'}</div>`;
+  }
+  if (noAccess) noAccess.style.display = 'none';
+  if (interfaceEl) interfaceEl.style.display = 'block';
+
+  let allTestCases = [];
+  let projectsMap = {};
+  let sortField = 'createdTimestamp';
+  let sortDir = 'desc';
+
+  loadProjectsIntoSelect('filterProject').then(map => { projectsMap = map; });
+
+  async function loadTestCases() {
+    showSkeletons('tcCardList');
+    try {
+      const params = new URLSearchParams({ userPosition: user.position, employeeId: user.employeeId });
+      const res = await fetch(`${API_BASE}/test-cases?${params}`);
+      const data = await res.json();
+      if (data.success) {
+        allTestCases = (data.testCases || []).filter(tc => !tc.isDeleted && tc.status === 'Draft');
+        render();
+      } else {
+        showListError(data.message || 'Unable to load draft test cases.');
+      }
+    } catch {
+      showListError('Could not connect to the server.');
+    }
+  }
+
+  function showListError(message) {
+    const list = document.getElementById('tcCardList');
+    if (!list) return;
+    list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">⚠️</span><div class="empty-state-title">Unable to load review queue</div><div class="empty-state-sub">${message}</div></div>`;
+  }
+
+  function render() {
+    const filtered = sortCases(applyFilters(allTestCases, projectsMap), sortField, sortDir);
+    const list = document.getElementById('tcCardList');
+    const countEl = document.getElementById('resultsCount');
+    if (countEl) countEl.innerHTML = `Showing <strong>${filtered.length}</strong> of <strong>${allTestCases.length}</strong> draft test cases`;
+
+    if (!filtered.length) {
+      list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">📝</span><div class="empty-state-title">No draft cases to review</div><div class="empty-state-sub">Draft cases will appear here until they are reviewed or updated by their creator.</div></div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(tc => buildReviewCard(tc)).join('');
+    list.querySelectorAll('.btn-review-action').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const tcId = btn.dataset.id;
+        const action = btn.dataset.action;
+        const card = btn.closest('.tc-card');
+        const commentEl = card?.querySelector('.review-comment');
+        const comment = commentEl?.value.trim() || '';
+
+        if (action === 'review' && comment.length < 10) {
+          showToast('⚠ Review comments must be at least 10 characters long.', 'error');
+          return;
+        }
+
+        setLoading(btn, true);
+        try {
+          const res = await fetch(`${API_BASE}/test-cases/${tcId}/review`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, comment, userPosition: user.position, employeeId: user.employeeId, reviewerName: user.name })
+          });
+          const data = await res.json();
+          setLoading(btn, false, canApprove ? (action === 'approve' ? 'Approve' : 'Reject') : 'Submit Review');
+          if (data.success) {
+            allTestCases = allTestCases.filter(tc => tc.testCaseId !== tcId);
+            render();
+            showToast(`✓ ${tcId} ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'reviewed'}.`, 'success');
+          } else {
+            showToast(`✗ ${data.message}`, 'error');
+          }
+        } catch {
+          setLoading(btn, false, canApprove ? (action === 'approve' ? 'Approve' : 'Reject') : 'Submit Review');
+          showToast('⚠ Server unreachable.', 'error');
+        }
+      });
+    });
+  }
+
+  function buildReviewCard(tc) {
+    const icon = typeIcon(tc.testingTypeId || tc.testingType);
+    const priCls = `tc-pill-${(tc.priority || 'low').toLowerCase()}`;
+    const projName = projectsMap[tc.projectId] || tc.projectId || '—';
+    const actionLabel = canApprove ? 'Approve / Reject' : 'Submit Review';
+
+    return `
+    <div class="tc-card review-card" data-id="${tc.testCaseId}">
+      <div class="tc-card-head">
+        <div class="tc-type-badge">${icon}</div>
+        <div class="tc-card-main">
+          <div class="tc-card-name">${escHtml(tc.testCaseName)}</div>
+          <div class="tc-card-meta">
+            <span class="tc-pill tc-pill-id">${tc.testCaseId}</span>
+            <span class="tc-pill tc-pill-draft">Draft</span>
+            <span class="tc-pill ${priCls}">${tc.priority || '—'}</span>
+            <span class="tc-pill tc-pill-env">${tc.environment || '—'}</span>
+            <span class="tc-pill tc-pill-type">${tc.testingType || '—'}</span>
+          </div>
+        </div>
+        <div class="tc-card-right">
+          <div class="tc-date">
+            <div>${fmtDateShort(tc.createdTimestamp)}</div>
+            <div style="color:var(--gray-mid);font-size:9px;">by ${escHtml(tc.createdByName || tc.createdBy)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="tc-card-body">
+        <div class="tc-detail-grid">
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Project</div>
+            <div class="tc-detail-value">${escHtml(projName)}</div>
+          </div>
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Version</div>
+            <div class="tc-detail-value">v${tc.version || 1}</div>
+          </div>
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Created By</div>
+            <div class="tc-detail-value">${escHtml(tc.createdByName || tc.createdBy)}</div>
+          </div>
+          <div class="tc-detail-field" style="grid-column:1/-1;">
+            <div class="tc-detail-label">Description</div>
+            <div class="tc-detail-value">${escHtml(tc.description || '—')}</div>
+          </div>
+        </div>
+        <div class="review-action-row">
+          <div class="review-panel">
+            <label class="review-label" for="review-comment-${tc.testCaseId}">Review comments</label>
+            <textarea id="review-comment-${tc.testCaseId}" class="review-comment" placeholder="${canApprove ? 'Optional comment for approval or rejection' : 'Enter a review comment (at least 10 characters)'}"></textarea>
+            <div class="review-action-buttons">
+              ${canApprove ? `<button class="btn btn-secondary btn-sm btn-review-action" data-id="${tc.testCaseId}" data-action="reject">Reject</button><button class="btn btn-primary btn-sm btn-review-action" data-id="${tc.testCaseId}" data-action="approve">Approve</button>` : `<button class="btn btn-primary btn-sm btn-review-action" data-id="${tc.testCaseId}" data-action="review">${actionLabel}</button>`}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  wireFilterInputs(render);
+  wireSortButtons((f, d) => { sortField = f; sortDir = d; render(); });
+  loadTestCases();
+}
+
+// ═══════════════════════════════════════════════════════════
 // DELETE TEST CASES PAGE  (delete_test.html)
 // ═══════════════════════════════════════════════════════════
 
@@ -2313,6 +2492,7 @@ document.addEventListener('DOMContentLoaded', () => {
   else if (page.includes('create_test.html')) initCreateTestPage();
   else if (page.includes('read_test.html')) initReadTestPage();
   else if (page.includes('update_test.html')) initUpdateTestPage();
+  else if (page.includes('approve_test.html')) initApproveTestPage();
   else if (page.includes('delete_test.html')) initDeleteTestPage();
   else initLoginPage();
 });
