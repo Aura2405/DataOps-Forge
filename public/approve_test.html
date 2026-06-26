@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataOps Forge — Approve Test Cases</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
+</head>
+<body class="scrollable" style="display:block;overflow-y:auto;">
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="page-shell">
+
+    <nav class="top-nav">
+      <div class="nav-brand">
+        <div class="nav-logo">DataOps <span>Forge</span></div>
+        <div class="nav-divider"></div>
+        <div class="nav-page-label">Approve Test Cases</div>
+      </div>
+      <div class="nav-right">
+        <div class="nav-user-pill">
+          <div class="nav-avatar" id="navAvatar">?</div>
+          <div>
+            <div class="nav-user-name" id="navName">Loading…</div>
+            <div class="nav-role-tag" id="navRole">—</div>
+          </div>
+        </div>
+        <a href="test.html" class="nav-btn">⬡ Dashboard</a>
+        <button class="nav-btn" id="navLogout">↩ Sign Out</button>
+      </div>
+    </nav>
+
+    <div class="main-content">
+
+      <div class="page-title-strip" style="margin-bottom:20px;">
+        <h1>
+          <small>Week 4 — Approve</small>
+          Approve Test Cases
+        </h1>
+        <a href="read_test.html" class="btn btn-secondary btn-sm" style="text-decoration:none;flex:none;">🔍 View Cases</a>
+      </div>
+
+      <div class="scope-banner scope-own" id="scopeBanner">
+        <span class="scope-banner-icon">👤</span>
+        <div>Loading access scope…</div>
+      </div>
+
+      <div id="noApproveAccess" class="empty-state" style="display:none; margin-top:20px;">
+        <span class="empty-state-icon">🚫</span>
+        <div class="empty-state-title">Access Denied</div>
+        <div class="empty-state-sub">Only Senior Employee and higher roles may review test cases. Your current role is <strong class="no-access-role">—</strong>.</div>
+      </div>
+
+      <div id="approveInterface">
+        <div class="filter-bar">
+          <div class="filter-group" style="min-width:220px;flex:2;">
+            <label>🔍 Search</label>
+            <input type="text" id="filterSearch" placeholder="ID, name, description, author…" />
+          </div>
+          <div class="filter-group">
+            <label>📁 Project</label>
+            <div class="filter-select-wrap">
+              <select id="filterProject"><option value="">All Projects</option></select>
+            </div>
+          </div>
+          <div class="filter-group">
+            <label>⚗️ Test Type</label>
+            <div class="filter-select-wrap">
+              <select id="filterType">
+                <option value="">All Types</option>
+                <option value="functional">Functional</option>
+                <option value="api">API Testing</option>
+                <option value="performance">Performance</option>
+                <option value="security">Security</option>
+                <option value="ui">UI / UX</option>
+                <option value="integration">Integration</option>
+                <option value="regression">Regression</option>
+                <option value="smoke">Smoke</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-group">
+            <label>🚦 Priority</label>
+            <div class="filter-select-wrap">
+              <select id="filterPriority">
+                <option value="">All Priorities</option>
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-group">
+            <label>🌐 Environment</label>
+            <div class="filter-select-wrap">
+              <select id="filterEnv">
+                <option value="">All Envs</option>
+                <option value="Dev">Dev</option>
+                <option value="QA">QA</option>
+                <option value="UAT">UAT</option>
+                <option value="Prod-like">Prod-like</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-actions">
+            <button class="btn btn-secondary btn-sm" id="btnClearFilters">✕ Clear</button>
+            <button class="btn btn-primary btn-sm" id="btnApplyFilters">Apply</button>
+          </div>
+        </div>
+
+        <div class="results-bar">
+          <div class="results-count" id="resultsCount">Loading…</div>
+          <div class="sort-strip">
+            <span>SORT:</span>
+            <button class="sort-btn active" data-sort="createdTimestamp" data-label="Date Added">Date Added ↓</button>
+            <button class="sort-btn" data-sort="testCaseName" data-label="Name">Name</button>
+            <button class="sort-btn" data-sort="priority" data-label="Priority">Priority</button>
+            <button class="sort-btn" data-sort="testingType" data-label="Type">Type</button>
+            <button class="sort-btn" data-sort="updatedTimestamp" data-label="Last Updated">Updated</button>
+          </div>
+        </div>
+
+        <div class="tc-card-list" id="tcCardList"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="script.js"></script>
+</body>
+</html>
