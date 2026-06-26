@@ -299,22 +299,18 @@ app.put('/api/test-cases/:id', (req, res) => {
   const scope = perms.update;
 
   if (scope === 'own_drafts') {
-    // Employee: can only update their own drafts
-    if (tc.createdBy !== employeeId)  return res.status(403).json({ success: false, message: 'You can only update your own test cases.' });
-    if (tc.status !== 'Draft')        return res.status(403).json({ success: false, message: 'You can only update Draft test cases. This case has already been submitted.' });
-    if (tc.isApproved)                return res.status(403).json({ success: false, message: 'This test case has been approved and cannot be edited.' });
+    if (tc.createdBy !== employeeId) {
+      return res.status(403).json({ success: false, message: 'You can only update your own test cases.' });
+    }
   } else if (scope === 'team') {
-    // Senior Employee: own + lower-tier cases
     const lowerTiers = Object.entries(PERMISSIONS).filter(([,p]) => p.tier <= perms.tier).map(([pos]) => pos);
     if (!lowerTiers.includes(tc.creatorPosition) && tc.createdBy !== employeeId) {
       return res.status(403).json({ success: false, message: 'You can only update test cases created by you or your team members.' });
     }
     if (tc.isApproved) return res.status(403).json({ success: false, message: 'Approved test cases cannot be edited.' });
   } else if (scope === 'project' || scope === 'department' || scope === 'multi_project') {
-    // Project Lead, Manager, Senior Manager: broad scope but not approved cases (unless Director)
     if (tc.isApproved) return res.status(403).json({ success: false, message: 'Approved test cases cannot be edited without Director privileges.' });
   }
-  // Director (organization) — can edit anything
 
   // ── Apply allowed field updates ───────────────────────────
   const UPDATABLE_FIELDS = ['testCaseName','description','projectId','testingType','testingTypeId','priority','environment','tags','dynamicData','status'];
@@ -328,18 +324,77 @@ app.put('/api/test-cases/:id', (req, res) => {
   patched.lastUpdatedBy    = employeeId;
   patched.lastUpdatedByName= updates.lastUpdatedByName || employeeId;
 
-  // Reset approval if content changed
-  if (tc.isApproved) {
+  // Reset approval state whenever a case is changed after review/approval
+  if (tc.status !== 'Draft' || tc.isApproved) {
     patched.isApproved = false;
     patched.approvedBy = null;
     patched.approvedAt = null;
     patched.status     = 'Draft';
+    patched.reviewComment = null;
+    patched.reviewedBy = null;
+    patched.reviewedAt = null;
   }
 
   testCases[idx] = patched;
   writeJSON(TEST_DB, testCases);
 
   return res.json({ success: true, message: 'Test case updated successfully.', testCase: patched });
+});
+
+// POST /api/test-cases/:id/review — review, approve or reject a draft test case
+app.post('/api/test-cases/:id/review', (req, res) => {
+  const { id } = req.params;
+  const { action, comment, userPosition, employeeId, reviewerName } = req.body;
+
+  if (!userPosition) return res.status(401).json({ success: false, message: 'Unauthorized.' });
+
+  const perms = PERMISSIONS[userPosition];
+  if (!perms) return res.status(403).json({ success: false, message: `Unknown role: ${userPosition}` });
+
+  if (!['review', 'approve', 'reject'].includes(action)) {
+    return res.status(400).json({ success: false, message: 'Invalid review action.' });
+  }
+
+  const testCases = readJSON(TEST_DB);
+  const idx = testCases.findIndex(tc => tc.testCaseId === id && !tc.isDeleted);
+  if (idx === -1) return res.status(404).json({ success: false, message: 'Draft test case not found.' });
+
+  const tc = testCases[idx];
+  if (tc.status !== 'Draft') {
+    return res.status(400).json({ success: false, message: 'This test case is no longer in the draft review queue.' });
+  }
+
+  if (action === 'review') {
+    if (perms.approve !== 'review_only') {
+      return res.status(403).json({ success: false, message: 'Only Senior Employees can submit a review.' });
+    }
+    if (!comment || String(comment).trim().length < 10) {
+      return res.status(400).json({ success: false, message: 'Review comments must be at least 10 characters long.' });
+    }
+  } else if (action === 'approve' || action === 'reject') {
+    if (!perms.approve) {
+      return res.status(403).json({ success: false, message: 'Only Project Lead and above can approve or reject test cases.' });
+    }
+  }
+
+  const now = new Date().toISOString();
+  const updated = {
+    ...tc,
+    status: action === 'approve' ? 'Approved' : action === 'reject' ? 'Rejected' : 'Reviewed',
+    isApproved: action === 'approve',
+    approvedBy: action === 'approve' ? (reviewerName || employeeId) : null,
+    approvedAt: action === 'approve' ? now : null,
+    reviewedBy: reviewerName || employeeId,
+    reviewedAt: now,
+    reviewComment: comment ? String(comment).trim() : null,
+    updatedTimestamp: now,
+    version: (tc.version || 1) + 1,
+  };
+
+  testCases[idx] = updated;
+  writeJSON(TEST_DB, testCases);
+
+  return res.json({ success: true, message: `Test case ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'reviewed'} successfully.`, testCase: updated });
 });
 
 // DELETE /api/test-cases/:id — delete a test case (RBAC: delete scope enforced)
