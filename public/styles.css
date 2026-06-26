@@ -1735,12 +1735,69 @@ textarea.forge-textarea.input-success { border-color: var(--success) !important;
 }
 
 .tc-card.expanded .tc-card-body { display: block; }
+.tc-card.review-card .tc-card-body { display: block; }
 
 .tc-detail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 16px;
   margin-bottom: 20px;
+}
+
+.review-action-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.review-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(124, 58, 237, 0.16);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.8);
+}
+
+.review-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--gray-mid);
+}
+
+.review-comment {
+  width: 100%;
+  min-height: 88px;
+  padding: 10px 12px;
+  border: 1px solid var(--gray-light);
+  border-radius: 10px;
+  resize: vertical;
+  font: inherit;
+  color: var(--black);
+  background: var(--white);
+}
+
+.review-comment:focus {
+  outline: none;
+  border-color: var(--purple-accent);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+.review-action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.btn-review-action {
+  min-width: 110px;
 }
 
 .tc-detail-label {
