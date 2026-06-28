@@ -748,7 +748,7 @@ function initCreateTestPage() {
               valid = false;
             }
           }
-          else {
+          else if (!['httpMethod', 'cvssScore'].includes(f.id)) {
             if (!textRules(val).valid) {
               el.classList.add('input-error');
               if (hintEl) {
@@ -1891,7 +1891,7 @@ function initUpdateTestPage() {
             );
           }
 
-        } else {
+        } else if (!['httpMethod', 'cvssScore'].includes(f.id)) {
 
           if (!textRules(val).valid) {
 
@@ -1910,6 +1910,11 @@ function initUpdateTestPage() {
               `upd-hint-${tcId}-${f.id}`
             );
           }
+        } else {
+          clearFieldError(
+            el,
+            `upd-hint-${tcId}-${f.id}`
+          );
         }
       }
     });
