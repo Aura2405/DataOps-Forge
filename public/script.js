@@ -1159,6 +1159,11 @@ function initReadTestPage() {
             <div class="tc-detail-label">Tags</div>
             <div class="tc-detail-value">${tagsHtml}</div>
           </div>
+          ${tc.reviewComment ? `<div class="tc-detail-field" style="grid-column:1/-1;border-top:1px solid var(--gray-light);padding-top:12px;margin-top:12px;">
+            <div class="tc-detail-label">📝 Review Comment</div>
+            <div class="tc-detail-value" style="background:var(--gray-light);padding:12px;border-radius:6px;">${escHtml(tc.reviewComment)}</div>
+            <div style="font-size:9px;color:var(--gray-mid);margin-top:8px;">By ${escHtml(tc.reviewedBy || '—')} · ${fmtDate(tc.reviewedAt)}</div>
+          </div>` : ''}
         </div>
         ${dynHtml}
       </div>
@@ -1525,6 +1530,12 @@ function initUpdateTestPage() {
 
         ${tc.isApproved ? `<div class="approved-lock-banner"><span class="alb-icon">🔒</span>
           <div class="alb-text"><strong>Approved — Locked</strong>This test case is approved and cannot be edited.</div></div>` : ''}
+
+        ${tc.reviewComment ? `<div style="background:#f0f4ff;padding:12px;border-radius:6px;margin-bottom:16px;border-left:4px solid var(--purple-accent);">
+          <div style="font-weight:600;color:var(--purple-accent);margin-bottom:8px;">📝 Review Comment</div>
+          <div style="color:var(--text-primary);margin-bottom:8px;">${escHtml(tc.reviewComment)}</div>
+          <div style="font-size:9px;color:var(--gray-mid);">By ${escHtml(tc.reviewedBy || '—')} · ${fmtDate(tc.reviewedAt)}</div>
+        </div>` : ''}
 
         <!-- Version strip -->
         <div class="version-strip">
@@ -2081,6 +2092,10 @@ function initApproveTestPage() {
           showToast('⚠ Review comments must be at least 10 characters long.', 'error');
           return;
         }
+        if ((action === 'approve' || action === 'reject') && comment.length === 0) {
+          showToast('⚠ Review comments are required for approval/rejection.', 'error');
+          return;
+        }
 
         setLoading(btn, true);
         try {
@@ -2154,8 +2169,8 @@ function initApproveTestPage() {
         </div>
         <div class="review-action-row">
           <div class="review-panel">
-            <label class="review-label" for="review-comment-${tc.testCaseId}">Review comments</label>
-            <textarea id="review-comment-${tc.testCaseId}" class="review-comment" placeholder="${canApprove ? 'Optional comment for approval or rejection' : 'Enter a review comment (at least 10 characters)'}"></textarea>
+            <label class="review-label" for="review-comment-${tc.testCaseId}">Review comments <span style="color:var(--error)">*</span> </label>
+            <textarea id="review-comment-${tc.testCaseId}" class="review-comment" placeholder="${canApprove ? 'Enter a review comment (required)' : 'Enter a review comment (at least 10 characters)'}"></textarea>
             <div class="review-action-buttons">
               ${canApprove ? `<button class="btn btn-secondary btn-sm btn-review-action" data-id="${tc.testCaseId}" data-action="reject">Reject</button><button class="btn btn-primary btn-sm btn-review-action" data-id="${tc.testCaseId}" data-action="approve">Approve</button>` : `<button class="btn btn-primary btn-sm btn-review-action" data-id="${tc.testCaseId}" data-action="review">${actionLabel}</button>`}
             </div>
