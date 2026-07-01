@@ -375,6 +375,9 @@ app.post('/api/test-cases/:id/review', (req, res) => {
     if (!perms.approve) {
       return res.status(403).json({ success: false, message: 'Only Project Lead and above can approve or reject test cases.' });
     }
+    if (!comment || String(comment).trim().length === 0) {
+      return res.status(400).json({ success: false, message: 'Review comments are required for approval/rejection.' });
+    }
   }
 
   const now = new Date().toISOString();
