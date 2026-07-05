@@ -2124,8 +2124,44 @@ function initApproveTestPage() {
   function buildReviewCard(tc) {
     const icon = typeIcon(tc.testingTypeId || tc.testingType);
     const priCls = `tc-pill-${(tc.priority || 'low').toLowerCase()}`;
+    const statusCls = tc.isApproved ? 'tc-pill-approved' : (tc.status === 'Draft' ? 'tc-pill-draft' : 'tc-pill-pending');
+    const statusLabel = tc.isApproved ? '✓ Approved' : tc.status || 'Draft';
     const projName = projectsMap[tc.projectId] || tc.projectId || '—';
+    const tagsHtml = (tc.tags || []).length
+      ? `<div class="tc-tags">${tc.tags.map(tag => `<span class="tc-tag">${escHtml(tag)}</span>`).join('')}</div>`
+      : '—';
     const actionLabel = canApprove ? 'Approve / Reject' : 'Submit Review';
+
+    let dynHtml = '';
+    if (tc.dynamicData) {
+      const config = DYNAMIC_FIELD_CONFIGS[tc.testingTypeId];
+      if (config) {
+        dynHtml = `<div class="tc-dynamic-section">
+          <div class="tc-dynamic-title">⚗️ ${config.label}</div>
+          <div class="tc-detail-grid">`;
+        config.fields.forEach(field => {
+          const value = tc.dynamicData[field.id];
+          if (!value || (Array.isArray(value) && !value.length)) return;
+          if (field.type === 'steps' && Array.isArray(value)) {
+            dynHtml += `<div class="tc-detail-field" style="grid-column:1/-1;">
+              <div class="tc-detail-label">${field.label}</div>
+              <ol class="tc-steps-list">${value.map((step, idx) => `<li><span class="step-n">${idx + 1}.</span>${escHtml(step)}</li>`).join('')}</ol>
+            </div>`;
+          } else if (field.type === 'textarea') {
+            dynHtml += `<div class="tc-detail-field" style="grid-column:1/-1;">
+              <div class="tc-detail-label">${field.label}</div>
+              <div class="tc-detail-value mono">${escHtml(value)}</div>
+            </div>`;
+          } else {
+            dynHtml += `<div class="tc-detail-field">
+              <div class="tc-detail-label">${field.label}</div>
+              <div class="tc-detail-value">${escHtml(String(value))}</div>
+            </div>`;
+          }
+        });
+        dynHtml += `</div></div>`;
+      }
+    }
 
     return `
     <div class="tc-card review-card" data-id="${tc.testCaseId}">
@@ -2135,7 +2171,7 @@ function initApproveTestPage() {
           <div class="tc-card-name">${escHtml(tc.testCaseName)}</div>
           <div class="tc-card-meta">
             <span class="tc-pill tc-pill-id">${tc.testCaseId}</span>
-            <span class="tc-pill tc-pill-draft">Draft</span>
+            <span class="tc-pill ${statusCls}">${statusLabel}</span>
             <span class="tc-pill ${priCls}">${tc.priority || '—'}</span>
             <span class="tc-pill tc-pill-env">${tc.environment || '—'}</span>
             <span class="tc-pill tc-pill-type">${tc.testingType || '—'}</span>
@@ -2146,13 +2182,34 @@ function initApproveTestPage() {
             <div>${fmtDateShort(tc.createdTimestamp)}</div>
             <div style="color:var(--gray-mid);font-size:9px;">by ${escHtml(tc.createdByName || tc.createdBy)}</div>
           </div>
+          <button class="tc-expand-btn" title="Expand details">▾</button>
         </div>
       </div>
       <div class="tc-card-body">
         <div class="tc-detail-grid">
           <div class="tc-detail-field">
+            <div class="tc-detail-label">Test Case ID</div>
+            <div class="tc-detail-value mono">${tc.testCaseId}</div>
+          </div>
+          <div class="tc-detail-field">
             <div class="tc-detail-label">Project</div>
             <div class="tc-detail-value">${escHtml(projName)}</div>
+          </div>
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Testing Type</div>
+            <div class="tc-detail-value">${icon} ${escHtml(tc.testingType || '—')}</div>
+          </div>
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Priority</div>
+            <div class="tc-detail-value">${escHtml(tc.priority || '—')}</div>
+          </div>
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Environment</div>
+            <div class="tc-detail-value">${escHtml(tc.environment || '—')}</div>
+          </div>
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Status</div>
+            <div class="tc-detail-value">${statusLabel}</div>
           </div>
           <div class="tc-detail-field">
             <div class="tc-detail-label">Version</div>
@@ -2162,11 +2219,28 @@ function initApproveTestPage() {
             <div class="tc-detail-label">Created By</div>
             <div class="tc-detail-value">${escHtml(tc.createdByName || tc.createdBy)}</div>
           </div>
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Created At</div>
+            <div class="tc-detail-value">${fmtDate(tc.createdTimestamp)}</div>
+          </div>
+          <div class="tc-detail-field">
+            <div class="tc-detail-label">Last Updated</div>
+            <div class="tc-detail-value">${fmtDate(tc.updatedTimestamp)}</div>
+          </div>
           <div class="tc-detail-field" style="grid-column:1/-1;">
             <div class="tc-detail-label">Description</div>
             <div class="tc-detail-value">${escHtml(tc.description || '—')}</div>
           </div>
+          <div class="tc-detail-field" style="grid-column:1/-1;">
+            <div class="tc-detail-label">Tags</div>
+            <div class="tc-detail-value">${tagsHtml}</div>
+          </div>
+          ${tc.reviewComment ? `<div class="tc-detail-field" style="grid-column:1/-1;border-top:1px solid var(--gray-light);padding-top:12px;margin-top:12px;">
+            <div class="tc-detail-label">📝 Review Comment</div>
+            <div class="tc-detail-value" style="background:var(--gray-light);padding:12px;border-radius:6px;">${escHtml(tc.reviewComment)}</div>
+          </div>` : ''}
         </div>
+        ${dynHtml}
         <div class="review-action-row">
           <div class="review-panel">
             <label class="review-label" for="review-comment-${tc.testCaseId}">Review comments <span style="color:var(--error)">*</span> </label>
