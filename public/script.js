@@ -201,10 +201,9 @@ function isValidEmail(email) {
 }
 
 function showFieldError(el, hintId, message) {
-  if (el) el.classList.add('input-error');
+  el?.classList.add('input-error');
 
   const hint = document.getElementById(hintId);
-
   if (hint) {
     hint.textContent = message;
     hint.classList.add('visible');
@@ -212,39 +211,15 @@ function showFieldError(el, hintId, message) {
 }
 
 function clearFieldError(el, hintId) {
-  if (el) el.classList.remove('input-error');
+  el?.classList.remove('input-error');
 
   const hint = document.getElementById(hintId);
-
-  if (hint) {
-    hint.classList.remove('visible');
-  }
+  if (hint) hint.classList.remove('visible');
 }
 
 // ═══════════════════════════════════════════════════════════
 // TEST CASE VALIDATION RULES
 // ═══════════════════════════════════════════════════════════
-
-function showFieldError(el, hintId, message) {
-    if (el) el.classList.add('input-error');
-
-    const hint = document.getElementById(hintId);
-
-    if (hint) {
-        hint.textContent = message;
-        hint.classList.add('visible');
-    }
-}
-
-function clearFieldError(el, hintId) {
-    if (el) el.classList.remove('input-error');
-
-    const hint = document.getElementById(hintId);
-
-    if (hint) {
-        hint.classList.remove('visible');
-    }
-}
 
 function textRules(value, minLength = 10) {
   const v = String(value || '').trim();
