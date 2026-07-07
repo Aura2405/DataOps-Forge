@@ -200,8 +200,6 @@ This project is licensed under the [MIT License](LICENSE).
 
 <div align="center">
 
-Built with ⚙️ by the DataOps Forge team
-
 *Forge better test data.*
 
 </div>
